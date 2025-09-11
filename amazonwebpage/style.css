@@ -1,0 +1,103 @@
+* { 
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    box-sizing: border-box;
+}
+.navbar {
+    display: flex;
+    justify-content: space-around;
+    height: 60px;
+    background-color: #000000;
+    color: antiquewhite;
+}
+.nav-logo {
+
+    height:60px;
+    width: 120px;
+}
+.logo{
+    background-image: url('./amazonnav.png');
+    height: 100%;
+    width: 100%;
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+.border{
+    border: 5px solid transparent;
+    transition: border 0.2s ease-in-out;
+}
+.nav-logo, .location, .search-icon, .nav-cart, .option select {
+    cursor: pointer;
+}
+.border:hover{
+    border: 5px solid rgb(206, 178, 19);
+}
+.location{
+    display: flex;
+    height: 50px;
+    width: 150px;
+    background-size: cover;
+    background-repeat: no-repeat;
+    margin-left: 10px;
+}
+.location-icon{
+    background-image: url('./location.jpg');
+    height: 30px;
+    width: 30px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    justify-self: center;
+}
+.nav-search{
+    display: flex;
+    align-items: center;
+    justify-content:space-around;
+    height: 30px;
+    width: 1000px;
+    margin-left: 0px;
+    margin-top: 15px;
+    border-radius: 4px;
+    background-color: white;
+}
+.option{
+    align-self: center;
+    margin-bottom: 5px;
+    height: 100%;
+    width: 50%;
+    border: none;
+}
+
+.option select {
+    background-color: #f3f3f3;
+    border: none;
+    padding: 5px;
+    border-radius: 4px 0 0 4px;
+}
+.search-bar{
+    height: 100%;
+    width: 70%;
+    border: none;
+    justify-content: center;
+}
+.search-icon{
+    background-image: url('./search.png');
+    height: 25px;
+    width: 10%;
+    border-radius: 4px;
+    align-self: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.search-icon:hover {
+    background-color: #f0f0f0;
+    cursor: pointer;
+}
+
+.cart-icon{
+    background: url('./cart.png');
+    height: 60px;
+    width: 50px;
+    background-size: contain;
+    background-repeat: no-repeat;
+}
