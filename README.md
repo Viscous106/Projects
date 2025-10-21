@@ -18,6 +18,6 @@
 	How to use:
 
   `Portfolio`: My personal portfolio website.
-	How to use: https://projects-mu-umber.vercel.app/ (Open This Link)
+	How to use: https://viscous106.github.io/Projects/webdevProjects/Portfolio/index.html (Open This Link)
 
 # Feel free to explore the different projects and their source code!
