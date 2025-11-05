@@ -1,0 +1,1071 @@
+--
+-- PostgreSQL database dump
+--
+
+\restrict qzS68x689RgElntjoIZtNGep9vIZObobJAgM14h27Q7tags3YjL1WfFqQKIYxJD
+
+-- Dumped from database version 15.14
+-- Dumped by pg_dump version 15.14
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: activity_type; Type: TYPE; Schema: public; Owner: user
+--
+
+CREATE TYPE public.activity_type AS ENUM (
+    'upload',
+    'delete',
+    'restore',
+    'share',
+    'unshare',
+    'rename',
+    'move',
+    'comment',
+    'download',
+    'star',
+    'unstar'
+);
+
+
+ALTER TYPE public.activity_type OWNER TO "user";
+
+--
+-- Name: file_status; Type: TYPE; Schema: public; Owner: user
+--
+
+CREATE TYPE public.file_status AS ENUM (
+    'active',
+    'trashed',
+    'deleted'
+);
+
+
+ALTER TYPE public.file_status OWNER TO "user";
+
+--
+-- Name: item_type; Type: TYPE; Schema: public; Owner: user
+--
+
+CREATE TYPE public.item_type AS ENUM (
+    'file',
+    'folder'
+);
+
+
+ALTER TYPE public.item_type OWNER TO "user";
+
+--
+-- Name: permission_role; Type: TYPE; Schema: public; Owner: user
+--
+
+CREATE TYPE public.permission_role AS ENUM (
+    'viewer',
+    'commenter',
+    'editor',
+    'owner'
+);
+
+
+ALTER TYPE public.permission_role OWNER TO "user";
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: activity_log; Type: TABLE; Schema: public; Owner: user
+--
+
+CREATE TABLE public.activity_log (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    file_id uuid,
+    activity_type public.activity_type NOT NULL,
+    details jsonb,
+    created_at timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.activity_log OWNER TO "user";
+
+--
+-- Name: comments; Type: TABLE; Schema: public; Owner: user
+--
+
+CREATE TABLE public.comments (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    file_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    content text NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    is_deleted boolean DEFAULT false NOT NULL
+);
+
+
+ALTER TABLE public.comments OWNER TO "user";
+
+--
+-- Name: file_versions; Type: TABLE; Schema: public; Owner: user
+--
+
+CREATE TABLE public.file_versions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    file_id uuid NOT NULL,
+    version_number integer NOT NULL,
+    storage_path text NOT NULL,
+    size bigint NOT NULL,
+    uploaded_by uuid NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.file_versions OWNER TO "user";
+
+--
+-- Name: files; Type: TABLE; Schema: public; Owner: user
+--
+
+CREATE TABLE public.files (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(500) NOT NULL,
+    original_name character varying(500) NOT NULL,
+    mime_type character varying(100) NOT NULL,
+    size bigint NOT NULL,
+    storage_path text NOT NULL,
+    owner_id uuid NOT NULL,
+    parent_folder_id uuid,
+    status public.file_status DEFAULT 'active'::public.file_status,
+    is_starred boolean DEFAULT false,
+    thumbnail_path text,
+    preview_available boolean DEFAULT false,
+    version integer DEFAULT 1,
+    current_version_id uuid,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    trashed_at timestamp without time zone,
+    last_accessed_at timestamp without time zone
+);
+
+
+ALTER TABLE public.files OWNER TO "user";
+
+--
+-- Name: folders; Type: TABLE; Schema: public; Owner: user
+--
+
+CREATE TABLE public.folders (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(500) NOT NULL,
+    owner_id uuid NOT NULL,
+    parent_folder_id uuid,
+    is_root boolean DEFAULT false,
+    status public.file_status DEFAULT 'active'::public.file_status,
+    is_starred boolean DEFAULT false,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    trashed_at timestamp without time zone
+);
+
+
+ALTER TABLE public.folders OWNER TO "user";
+
+--
+-- Name: goose_db_version; Type: TABLE; Schema: public; Owner: user
+--
+
+CREATE TABLE public.goose_db_version (
+    id integer NOT NULL,
+    version_id bigint NOT NULL,
+    is_applied boolean NOT NULL,
+    tstamp timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.goose_db_version OWNER TO "user";
+
+--
+-- Name: goose_db_version_id_seq; Type: SEQUENCE; Schema: public; Owner: user
+--
+
+ALTER TABLE public.goose_db_version ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME public.goose_db_version_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
+-- Name: permissions; Type: TABLE; Schema: public; Owner: user
+--
+
+CREATE TABLE public.permissions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    item_type public.item_type NOT NULL,
+    item_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    role public.permission_role NOT NULL,
+    granted_by uuid NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.permissions OWNER TO "user";
+
+--
+-- Name: sessions; Type: TABLE; Schema: public; Owner: user
+--
+
+CREATE TABLE public.sessions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    token text NOT NULL,
+    expires_at timestamp without time zone NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.sessions OWNER TO "user";
+
+--
+-- Name: shares; Type: TABLE; Schema: public; Owner: user
+--
+
+CREATE TABLE public.shares (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    item_type public.item_type NOT NULL,
+    item_id uuid NOT NULL,
+    token text NOT NULL,
+    created_by uuid NOT NULL,
+    permission public.permission_role DEFAULT 'viewer'::public.permission_role,
+    expires_at timestamp without time zone,
+    is_active boolean DEFAULT true,
+    created_at timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.shares OWNER TO "user";
+
+--
+-- Name: users; Type: TABLE; Schema: public; Owner: user
+--
+
+CREATE TABLE public.users (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    email character varying(255) NOT NULL,
+    hashed_password text NOT NULL,
+    name character varying(255) NOT NULL,
+    storage_used bigint DEFAULT 0,
+    storage_limit bigint DEFAULT '16106127360'::bigint,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.users OWNER TO "user";
+
+--
+-- Data for Name: activity_log; Type: TABLE DATA; Schema: public; Owner: user
+--
+
+COPY public.activity_log (id, user_id, file_id, activity_type, details, created_at) FROM stdin;
+300a370f-c9b1-4c36-a68d-33ee84293001	0175f133-1e13-41fc-9b39-ab3921c962af	e6742eb6-449f-4ccf-a964-769bd5240857	upload	\N	2025-11-03 11:29:04.484034
+229dc422-6c6e-4ed1-853d-e08244bc45ae	0175f133-1e13-41fc-9b39-ab3921c962af	523d6156-bb1e-4333-ba5c-85af302a6546	upload	\N	2025-11-03 11:29:07.558373
+0f5dec52-2ed6-4d04-89f8-63c7c31244b1	0175f133-1e13-41fc-9b39-ab3921c962af	7293b6d2-4286-42ae-a040-e040811884c5	upload	\N	2025-11-03 11:29:12.784568
+472cdb69-058f-49fb-8ad5-309df2b4087c	0175f133-1e13-41fc-9b39-ab3921c962af	9035abe4-06d7-4055-b9a4-2b9671c3b471	upload	\N	2025-11-03 11:29:18.887283
+e2e8146b-a5b5-43a5-b9fd-24804ae93154	0175f133-1e13-41fc-9b39-ab3921c962af	e27ed200-aa80-4349-8ddc-f5c349fb2bd0	upload	\N	2025-11-03 11:29:19.909346
+c7380ace-a158-4ee1-88c1-65e0d3430602	0175f133-1e13-41fc-9b39-ab3921c962af	922e0a6b-6bda-44c0-8584-f25db6ef8549	upload	\N	2025-11-03 11:29:21.041965
+6d68f7b3-90fd-4cf3-93d9-4da2158e5a73	0175f133-1e13-41fc-9b39-ab3921c962af	f4ea7908-3394-4a4c-a923-8371a5305b99	upload	\N	2025-11-03 11:29:25.875248
+398b251f-1cc5-433a-824e-49cf5f4fb118	0175f133-1e13-41fc-9b39-ab3921c962af	5113b33c-9242-4bfd-8031-8340682e3278	upload	\N	2025-11-03 11:29:27.434681
+75c516ca-0541-4c23-931f-2251d982669d	0175f133-1e13-41fc-9b39-ab3921c962af	5080fbe8-c4ce-443f-b48d-67aecc966eb2	upload	\N	2025-11-03 11:29:28.658168
+bfd9e5ad-fa87-4efd-a075-c32c23900c4e	0175f133-1e13-41fc-9b39-ab3921c962af	2f72623b-7eb2-4e1c-a4c6-bb51a9b0e7cf	upload	\N	2025-11-03 11:29:29.89376
+4e818480-6003-485f-8b42-29143af46012	0175f133-1e13-41fc-9b39-ab3921c962af	3edd34c0-185a-40c9-807f-84cafb5e58ee	upload	\N	2025-11-03 11:29:31.291489
+75985c4c-5aff-42e0-a938-6daee0f61fa6	0175f133-1e13-41fc-9b39-ab3921c962af	9eadf80f-c973-492f-b2ed-3e83e18bbde6	upload	\N	2025-11-03 11:29:38.726261
+df4469b8-999a-4da0-96ce-f12d011e2271	0175f133-1e13-41fc-9b39-ab3921c962af	ca4ddaff-a70c-42e9-bbcc-4f58b99ebe8f	upload	\N	2025-11-03 11:29:38.740956
+5c8157d7-7aa6-47b8-a469-0050d1eb67a4	0175f133-1e13-41fc-9b39-ab3921c962af	0932e718-811c-4e8f-ae54-5e8287984fd7	upload	\N	2025-11-03 11:29:38.754677
+816fadfa-7bc6-40af-9d55-3b0cc0b09d77	0175f133-1e13-41fc-9b39-ab3921c962af	552340b4-d1a8-4c2b-8c01-39693424d2f2	upload	\N	2025-11-03 11:29:38.768008
+f3327535-29ed-44ba-9ae9-8f840a48a3d0	0175f133-1e13-41fc-9b39-ab3921c962af	b6b61243-084d-4388-a429-b1a55a826e9d	upload	\N	2025-11-03 11:29:38.780778
+a48e8cea-3bc7-4f9e-a731-647999e4f08d	0175f133-1e13-41fc-9b39-ab3921c962af	5d46e2e1-0b92-4ac7-b1bb-01db0e9c1eb4	upload	\N	2025-11-03 11:29:38.79337
+c2581adf-151b-42b0-941a-3a3cd63eb27d	0175f133-1e13-41fc-9b39-ab3921c962af	4718316a-6873-4d00-98a3-9a045ab5a52c	upload	\N	2025-11-03 11:29:38.806503
+93808c01-2ec9-4bb2-a137-1459087d0a4b	0175f133-1e13-41fc-9b39-ab3921c962af	eef6c23d-aca6-4b18-9067-958bdfb2e07e	upload	\N	2025-11-03 11:29:38.818333
+af95356c-fb8e-4e9a-9c05-1846f9dcd626	0175f133-1e13-41fc-9b39-ab3921c962af	88fa3de6-dc7a-497f-9291-4b9ff04db1d9	upload	\N	2025-11-03 11:29:38.830827
+d53a569c-afd8-4d62-8bec-acc5fe73339f	0175f133-1e13-41fc-9b39-ab3921c962af	52596177-7de9-46d8-9e7b-4f22fa03bd7e	upload	\N	2025-11-03 11:29:38.843967
+0a8badd1-d2cb-49c5-b4b3-490ae147dbf8	0175f133-1e13-41fc-9b39-ab3921c962af	04e1e7b1-2cd3-4049-af5c-7c7011bb9337	upload	\N	2025-11-03 11:29:38.859471
+662f4f6e-8fc4-4158-a197-e4de137b49f5	0175f133-1e13-41fc-9b39-ab3921c962af	1016dab7-36e4-4e15-aaab-7e31ff1bb33b	upload	\N	2025-11-03 11:29:38.872351
+f96c70b3-a03b-48ac-bf17-2ecafdba982b	0175f133-1e13-41fc-9b39-ab3921c962af	5219a79d-eb04-4362-8464-febd47725d9b	upload	\N	2025-11-03 11:29:38.990987
+04c6ea17-f7c3-43f7-a8b4-d8a82038190f	0175f133-1e13-41fc-9b39-ab3921c962af	927bf282-3958-4126-9a93-0e3052ac6b4c	upload	\N	2025-11-03 11:29:39.00588
+4a702f50-5a41-468f-a825-27c34d687686	0175f133-1e13-41fc-9b39-ab3921c962af	384a1d81-591d-43b4-b9e7-07548e0f6f62	upload	\N	2025-11-03 11:29:39.018285
+7769cb9b-f2b3-43d6-b096-d094a8936793	0175f133-1e13-41fc-9b39-ab3921c962af	10628d04-533f-4d1d-8b89-3058476a1b25	upload	\N	2025-11-03 11:29:39.031661
+898394e2-68dc-4e23-a589-c6f76f07d75e	0175f133-1e13-41fc-9b39-ab3921c962af	778cae3e-2115-4c1d-9bbe-7bc9cadecaac	upload	\N	2025-11-03 11:29:39.044875
+a7819b9e-8b01-4647-a259-7782dc193e87	0175f133-1e13-41fc-9b39-ab3921c962af	db8c4fb7-4fb5-46b7-b107-cac271a79b16	upload	\N	2025-11-03 11:29:39.058373
+86b8d6c1-3c9b-4ed2-9462-3747debb0684	0175f133-1e13-41fc-9b39-ab3921c962af	f56196c4-19c9-4a47-8f32-6d91fbd92c8b	upload	\N	2025-11-03 11:29:39.07135
+55d67f5e-0dd5-4864-a3cd-297f0165e7c6	0175f133-1e13-41fc-9b39-ab3921c962af	53edf194-0e85-4765-942f-59968e1f9239	upload	\N	2025-11-03 11:29:39.084268
+f10a1787-d226-49e2-bf89-41d7ac7bb789	0175f133-1e13-41fc-9b39-ab3921c962af	6bc1bf98-69d2-4305-ad2d-9bc4922b923c	upload	\N	2025-11-03 11:29:39.097132
+c317c9b2-1a89-43da-9dfe-6036e62f2e36	0175f133-1e13-41fc-9b39-ab3921c962af	e4f64aa2-b7f0-4127-a687-98f8350a8735	upload	\N	2025-11-03 11:29:39.110164
+08c42e3d-0589-4913-936f-2d80c4cbd308	0175f133-1e13-41fc-9b39-ab3921c962af	3a3b446e-f68b-4463-8502-2b11488d62f5	upload	\N	2025-11-03 11:29:39.123089
+e22ca19e-2aac-4c3a-9d61-95832e0018c5	0175f133-1e13-41fc-9b39-ab3921c962af	4d349e7e-37a6-4187-aa0f-25f9a9f165f3	upload	\N	2025-11-03 11:29:39.135844
+d3e81f35-2a9e-4e82-94cb-f6fe0a188d5e	0175f133-1e13-41fc-9b39-ab3921c962af	14fa61be-99ce-4491-8c0b-b1890558cff9	upload	\N	2025-11-03 11:29:39.149109
+25ced83f-aa9a-4f4c-9330-591dc2a922f5	0175f133-1e13-41fc-9b39-ab3921c962af	26549bf0-7dae-4423-b196-62805c120a13	upload	\N	2025-11-03 11:29:39.16194
+e1a5710c-712d-4401-a818-bb7cdc189cd1	0175f133-1e13-41fc-9b39-ab3921c962af	cdcdc8e0-a091-4da9-8c41-6d978e443622	upload	\N	2025-11-03 11:29:39.174426
+1cd3f858-6add-4724-b7d9-d7f512ab607d	0175f133-1e13-41fc-9b39-ab3921c962af	60012284-8a0f-4e18-b9b1-98445e65b669	upload	\N	2025-11-03 11:29:39.187948
+569ef692-4306-44f5-bcf8-28bb74f1be87	0175f133-1e13-41fc-9b39-ab3921c962af	4983994f-943e-465e-ba10-6b90ca99cdf1	upload	\N	2025-11-03 11:29:39.201161
+92d270d5-f0e7-4313-964f-72ac69a8c37c	0175f133-1e13-41fc-9b39-ab3921c962af	4bdc7aae-c38d-48da-a2d4-533565440478	upload	\N	2025-11-03 11:29:39.214453
+ee003b07-1985-4dd2-ba6f-f61b1381d11f	0175f133-1e13-41fc-9b39-ab3921c962af	42d2f0e8-c657-4ccb-b5ee-4642e2603de5	upload	\N	2025-11-03 11:29:39.227928
+c55680c3-1095-4a67-b315-0d0cc5496f3b	0175f133-1e13-41fc-9b39-ab3921c962af	7b9241c4-51a3-4cea-9000-9a91c476bbd9	upload	\N	2025-11-03 11:29:39.241022
+0c61c6f0-c493-485c-9002-5fe530468684	0175f133-1e13-41fc-9b39-ab3921c962af	084e0143-b7c3-426e-b45b-725f3cbab1b9	upload	\N	2025-11-03 11:29:39.253081
+00146c0b-e5ed-4570-be39-a6282664fbda	0175f133-1e13-41fc-9b39-ab3921c962af	96911736-acf4-4cc4-bed0-2a10ebf513d0	upload	\N	2025-11-03 11:29:39.26619
+bb1067bc-bbda-4a20-affa-66ba099974e1	0175f133-1e13-41fc-9b39-ab3921c962af	9864445a-dfc1-4001-b18a-65165b55c686	upload	\N	2025-11-03 11:29:39.279217
+f8fd2567-6191-4408-befe-d1e010f7dfc1	0175f133-1e13-41fc-9b39-ab3921c962af	e489eb01-f97e-4deb-9c2c-36446e4a872d	upload	\N	2025-11-03 11:29:39.291841
+17df60e0-1110-446a-ba76-38d26296837b	0175f133-1e13-41fc-9b39-ab3921c962af	01596948-9ece-4640-b42e-08860a0cbe2b	upload	\N	2025-11-03 11:29:39.304887
+b9e4716a-209d-4482-a800-557d4d834b53	0175f133-1e13-41fc-9b39-ab3921c962af	c64392a3-492b-4785-82a4-02d923458d8b	upload	\N	2025-11-03 11:29:39.318071
+11730b79-764d-471b-baf6-cb5628078b65	0175f133-1e13-41fc-9b39-ab3921c962af	8a1deb0e-b2ea-4951-8632-2e5f04ef7ff1	upload	\N	2025-11-03 11:29:39.330958
+383566c8-05b4-41c1-9a69-b7b957851119	0175f133-1e13-41fc-9b39-ab3921c962af	3432622a-ca22-489c-b40d-4ae62f0116e6	upload	\N	2025-11-03 11:29:39.343985
+150e9446-8e94-46f6-974f-3aab69f13133	0175f133-1e13-41fc-9b39-ab3921c962af	5907cd4b-49dc-4122-ae7e-b1066b0c4307	upload	\N	2025-11-03 11:29:39.35715
+d7de2392-44a4-4cd4-b964-8a264da9c749	0175f133-1e13-41fc-9b39-ab3921c962af	8a11d530-54c8-40dd-827c-1394e294d7c3	upload	\N	2025-11-03 11:29:39.370087
+18ff09a6-064e-47f9-8aa3-7710ed9d0d2f	0175f133-1e13-41fc-9b39-ab3921c962af	e8879225-6f91-4d20-bdc8-a2e8d9c899f5	upload	\N	2025-11-03 11:29:39.383052
+0c76cf23-6e5a-4add-a9d2-733302806c31	0175f133-1e13-41fc-9b39-ab3921c962af	13a2b815-d32f-4f27-bffc-4db069ce5507	upload	\N	2025-11-03 11:29:39.395625
+17c06263-667a-42d4-adb1-c9a04d502918	0175f133-1e13-41fc-9b39-ab3921c962af	983171f3-29d2-4f24-affc-f1359d163b86	upload	\N	2025-11-03 11:29:39.408205
+599e5763-7099-4606-8af0-1f708a745e57	0175f133-1e13-41fc-9b39-ab3921c962af	3508e577-ccf8-4d95-b269-effab468a5e0	upload	\N	2025-11-03 11:29:39.421058
+274b52e4-ecb1-48f8-9f91-6719cc42e23e	0175f133-1e13-41fc-9b39-ab3921c962af	fb1c2239-465a-4f02-91fa-723fd260eace	upload	\N	2025-11-03 11:29:39.432935
+baf03d97-2694-4505-ab00-a3684f4bb340	0175f133-1e13-41fc-9b39-ab3921c962af	05ea7b08-b471-486b-827c-a26cee446f59	upload	\N	2025-11-03 11:29:39.446287
+a522dcc8-2fb5-494f-b8ed-d8e6acf84ad6	0175f133-1e13-41fc-9b39-ab3921c962af	ca03f7af-7eb1-4a8d-8d99-8756b8b5dfb1	upload	\N	2025-11-03 11:29:39.458116
+d00b3bd7-7c8f-494d-97f4-0ce1ced33c05	0175f133-1e13-41fc-9b39-ab3921c962af	06a1a11b-721e-4326-9e5c-0a6e984a2eba	upload	\N	2025-11-03 11:29:39.47065
+30a0a407-8ecf-407f-9ca7-5d75626a223c	0175f133-1e13-41fc-9b39-ab3921c962af	49ccd290-6ff1-4043-8931-6617a14ceaf7	upload	\N	2025-11-03 11:29:39.482991
+713ed489-c0fd-4f1d-a6f9-b3814a37d4d0	0175f133-1e13-41fc-9b39-ab3921c962af	1fb40ff7-8fbd-4fa8-ac79-b26cde496fd1	upload	\N	2025-11-03 11:29:39.495146
+03a31dde-8d89-440f-922b-883c1666feb4	0175f133-1e13-41fc-9b39-ab3921c962af	cedef217-c708-4862-8e8e-739f9686bbd9	upload	\N	2025-11-03 11:29:39.507121
+6336ce3f-7c40-46a7-96f5-cbce11d456eb	0175f133-1e13-41fc-9b39-ab3921c962af	26b21ad1-ea48-4706-9634-7e3a3e0b30bb	upload	\N	2025-11-03 11:29:39.519406
+2231a947-af5d-4abf-9cd0-362d56ee0b3d	0175f133-1e13-41fc-9b39-ab3921c962af	b0d3524e-93f0-4bfb-bdef-557b8fe4fdf9	upload	\N	2025-11-03 11:29:39.53133
+8dee1823-4209-4d02-8652-1d1240045158	0175f133-1e13-41fc-9b39-ab3921c962af	e66ed53d-1eaa-489d-aa0a-439b6bba5eea	upload	\N	2025-11-03 11:29:39.543652
+50c89f7f-f587-4e00-852b-f518a343e56a	0175f133-1e13-41fc-9b39-ab3921c962af	2867ad3a-548c-422e-a1f6-b83958494c08	upload	\N	2025-11-03 11:29:39.556034
+a56efbda-4d45-4f61-8f54-da4aa867f917	0175f133-1e13-41fc-9b39-ab3921c962af	056f499d-47a5-48b9-9cfa-d30a097968ad	upload	\N	2025-11-03 11:29:39.56886
+1cfcf1c8-e322-4851-a8a8-eb82e094e057	0175f133-1e13-41fc-9b39-ab3921c962af	74bf577b-f447-4b48-9b07-176e1263eb7e	upload	\N	2025-11-03 11:29:39.58213
+a44113e0-c7a4-4380-8280-d6978a1220fe	0175f133-1e13-41fc-9b39-ab3921c962af	4f503ebb-dd9d-499d-b567-351f6e6161bc	upload	\N	2025-11-03 11:29:39.595041
+a3b05e2f-c343-4c82-a0d0-d44f380509de	0175f133-1e13-41fc-9b39-ab3921c962af	1ea19964-82d5-474e-a115-b9211d2db070	upload	\N	2025-11-03 11:29:39.607179
+2b9a4858-aced-42c7-913a-2a8cb94bb682	0175f133-1e13-41fc-9b39-ab3921c962af	6a4fe692-3d9c-4b9f-8adf-5457940c9d70	upload	\N	2025-11-03 11:29:39.620098
+e554740f-fdd2-45be-b073-694ad9191b34	0175f133-1e13-41fc-9b39-ab3921c962af	1973cd18-0fa9-4592-a93a-d0d98060b98f	upload	\N	2025-11-03 11:29:39.63229
+52b95d4a-82b6-45b5-aa5f-125666dfa43a	0175f133-1e13-41fc-9b39-ab3921c962af	0300dbcf-a84b-4962-ae29-6cc1cfe3a86b	upload	\N	2025-11-03 11:29:39.645213
+f6eec1d4-7d62-42ae-8c84-f294f905a740	0175f133-1e13-41fc-9b39-ab3921c962af	0f633a6f-1976-4f55-b53a-2a1975f46b82	upload	\N	2025-11-03 11:29:39.65828
+1fe3f7df-c373-458d-b40e-e650876c09e2	0175f133-1e13-41fc-9b39-ab3921c962af	00765a9c-b721-415a-b110-af287ba64b7e	upload	\N	2025-11-03 11:29:39.670973
+a5b747d2-5a32-4827-9dcd-9a5b6f29f929	0175f133-1e13-41fc-9b39-ab3921c962af	1f32a6ee-5916-4e72-ae66-4fc0d33bf392	upload	\N	2025-11-03 11:29:39.683764
+32fa9618-e0b7-4616-8174-057fa1f79f3c	0175f133-1e13-41fc-9b39-ab3921c962af	847f1d1d-341d-4289-a43b-0332f7bdaa0a	upload	\N	2025-11-03 11:29:39.696734
+b422793b-96fa-4fcb-8709-818b09d1b0d5	0175f133-1e13-41fc-9b39-ab3921c962af	0a6fe912-c4b8-409b-828a-b6309afc551b	upload	\N	2025-11-03 11:29:39.709221
+9ef08a4d-2ed3-4261-a91e-8d1237e2e445	0175f133-1e13-41fc-9b39-ab3921c962af	111b9b8c-474a-4d3c-a593-0350366a850a	upload	\N	2025-11-03 11:29:39.722055
+8a2b3c2d-5ba9-4853-8257-91f773051401	0175f133-1e13-41fc-9b39-ab3921c962af	f3a03194-c48f-4206-ab1e-16b77bf3e61c	upload	\N	2025-11-03 11:29:39.735136
+9194c69b-75c4-4fbb-8050-9d6e8ab53f08	0175f133-1e13-41fc-9b39-ab3921c962af	b1b2a192-290b-4ad4-99f0-0cccf13578e4	upload	\N	2025-11-03 11:29:39.74712
+ff703ab8-615f-47a8-b29d-6765a6f75db3	0175f133-1e13-41fc-9b39-ab3921c962af	6e934b16-d0eb-4649-a25d-5a11035df766	upload	\N	2025-11-03 11:29:39.7599
+0de5cd09-2c72-4f70-b8fb-01d405b8dd9f	0175f133-1e13-41fc-9b39-ab3921c962af	b855eb2c-5d0f-4bda-ba4d-1a9380d05638	upload	\N	2025-11-03 11:29:39.772108
+9e9c843c-6f90-4885-a4bd-6f10629e815d	0175f133-1e13-41fc-9b39-ab3921c962af	635e9b21-fecf-4b4a-9c03-2c0f3c9fd4c8	upload	\N	2025-11-03 11:29:39.783835
+027010f8-1abb-4741-8b77-7457d1317506	0175f133-1e13-41fc-9b39-ab3921c962af	2038baab-863a-4d89-9a33-034f146672e1	upload	\N	2025-11-03 11:29:39.795866
+d8093c17-6fa8-406f-971a-85f726f5e8ae	0175f133-1e13-41fc-9b39-ab3921c962af	03a116dc-7b0d-4f55-963e-4fde290ca06b	upload	\N	2025-11-03 11:29:39.808085
+6014a69b-4536-46b1-86e4-eceaf9dddea4	0175f133-1e13-41fc-9b39-ab3921c962af	0cad7453-bd5b-4056-a9f6-5974cac91977	upload	\N	2025-11-03 11:29:39.820006
+20bef463-a152-4a29-b4fb-a378a801c0c4	0175f133-1e13-41fc-9b39-ab3921c962af	22db6071-a74c-4e6c-b175-62da597765cb	upload	\N	2025-11-03 11:30:00.794478
+28d7c2b9-56e5-4a4a-91dc-dafd70b15c15	0175f133-1e13-41fc-9b39-ab3921c962af	ca1b9706-fbf9-485a-89f6-24cdbd1c1678	upload	\N	2025-11-03 11:30:02.797007
+154b65dc-33a1-4110-9ff2-ab726cb3749f	0175f133-1e13-41fc-9b39-ab3921c962af	257433d7-d0f1-4963-903f-1f7e670f3d67	upload	\N	2025-11-03 11:30:04.185599
+ea96ae80-9cd3-43ea-ac41-0337980c5e0e	0175f133-1e13-41fc-9b39-ab3921c962af	901c7cdd-543a-4aa0-93df-38cc7273ca58	upload	\N	2025-11-03 11:30:06.220309
+281b3fd6-4b92-451b-84e8-6222924c4303	0175f133-1e13-41fc-9b39-ab3921c962af	1f983c9f-41d9-48fe-874a-7be1713d3ec4	upload	\N	2025-11-03 11:30:07.737829
+25aba26a-20ce-41f0-9ea0-d63c2c6b31bb	0175f133-1e13-41fc-9b39-ab3921c962af	fa07807a-2ace-4861-9c02-3133c42666b4	upload	\N	2025-11-03 11:30:09.787222
+e9ccb228-24e0-4c6a-9c58-4e023d1725fd	0175f133-1e13-41fc-9b39-ab3921c962af	7e9ead1c-004d-400b-91f1-32cf830ea2b7	upload	\N	2025-11-03 11:30:19.020209
+\.
+
+
+--
+-- Data for Name: comments; Type: TABLE DATA; Schema: public; Owner: user
+--
+
+COPY public.comments (id, file_id, user_id, content, created_at, updated_at, is_deleted) FROM stdin;
+\.
+
+
+--
+-- Data for Name: file_versions; Type: TABLE DATA; Schema: public; Owner: user
+--
+
+COPY public.file_versions (id, file_id, version_number, storage_path, size, uploaded_by, created_at) FROM stdin;
+d4856f92-fdde-4750-af07-b093fbf783e3	e6742eb6-449f-4ccf-a964-769bd5240857	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/6724f656-bf8e-4dbb-ab95-e19ecc58ba06/v1_ray-so-export (2).png	2051108	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:04.477456
+786cc51e-8e70-41c7-993d-fec229a6fc90	523d6156-bb1e-4333-ba5c-85af302a6546	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/6a6664cc-7113-4992-8e21-40d8e30d7e1e/v1_ray-so-export (1).png	1435388	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:07.554026
+c25cbb24-a346-4485-b262-5a17e10910cd	7293b6d2-4286-42ae-a040-e040811884c5	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/3639e1aa-7067-4739-84d1-961acd42d7c4/v1_Expressions for Discussion and Debate new.pdf	36912	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:12.780068
+ff85b4c8-b0cf-43fc-aeff-9ddcc36c6b86	9035abe4-06d7-4055-b9a4-2b9671c3b471	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/1f56faef-66a7-410d-9295-06db134130d1/v1_notely-474107-b7a125a8fdaf.json	2369	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:18.883073
+5036550f-d521-4da6-8696-e02afe5ee944	e27ed200-aa80-4349-8ddc-f5c349fb2bd0	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/d604925c-84e1-451b-8c5f-a675481db58f/v1_Conditional.pdf	714011	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:19.905009
+7534cdbb-087c-4f1e-b415-338a4fa664ad	922e0a6b-6bda-44c0-8584-f25db6ef8549	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/f91e86d2-1116-4a5a-b96a-ed1bc46fd35d/v1_Language-On-Schools-English-Irregular-Verbs-List (1).pdf	71999	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:21.037692
+5e8738d2-0eba-49eb-aeb1-34b388f1804b	f4ea7908-3394-4a4c-a923-8371a5305b99	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/850d679f-8730-45aa-962b-a0e8e3f23f3a/v1_ray-so-export (1).png	1435388	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:25.870959
+c01a75ac-89e1-48de-af46-474bb606d1fb	5113b33c-9242-4bfd-8031-8340682e3278	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/cc823a72-3bad-4cb8-a84a-339323261d76/v1_Sounds of English Consonant Sounds.pdf	164419	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:27.430456
+730dff15-2016-4b4d-882f-917c29ada29f	5080fbe8-c4ce-443f-b48d-67aecc966eb2	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/e672df30-edf4-437c-a851-737d6e0c489c/v1_Correction of Errors.pdf	125931	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:28.65405
+36e5706d-fba9-4094-9653-38eb51d3a40f	2f72623b-7eb2-4e1c-a4c6-bb51a9b0e7cf	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/fa7dc552-4bfd-4c5e-9a05-47a72ce3677a/v1_Language-On-Schools-English-Irregular-Verbs-List (1).pdf	71999	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:29.889569
+de2f067d-3135-47d6-a455-fccdd85919d5	3edd34c0-185a-40c9-807f-84cafb5e58ee	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/f248ecc7-83dd-4abe-9ad4-d51784e94059/v1_Math 1 - Week 3 - GA.pdf	468209	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:31.287611
+8e681cd5-26d8-455d-a3a1-4730e377dc97	9eadf80f-c973-492f-b2ed-3e83e18bbde6	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/23e8c257-4ff2-4ad0-8e95-bbe227b51736/v1_LICENSE	35141	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:38.722336
+12d8ced3-ffa6-4cc6-9d0e-0c12e55fea96	ca4ddaff-a70c-42e9-bbcc-4f58b99ebe8f	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/7337dbfa-de8b-4414-9a33-a28e096b0ac3/v1_install.sh	3263	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:38.736836
+d754429a-5263-4cc5-925a-150bca8a3464	0932e718-811c-4e8f-ae54-5e8287984fd7	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/f6fad2e1-a218-4252-9724-1c6c786398a3/v1_terminal_box_nw.png	1094	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:38.750793
+f3824b81-a924-45db-91d7-5f862b6ed35a	552340b4-d1a8-4c2b-8c01-39693424d2f2	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/22c840d0-2632-4698-99fd-1ed7532dc9d9/v1_dejavu_sans_16.pf2	203880	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:38.763787
+38589c09-9d51-48a1-843d-9e68065d1c29	b6b61243-084d-4388-a429-b1a55a826e9d	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/64bfe31a-ee4b-4506-bafd-90b838f77dfa/v1_select_c.png	181	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:38.776755
+b682c1b9-efe7-4809-aa40-a11a2566012d	5d46e2e1-0b92-4ac7-b1bb-01db0e9c1eb4	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/b5a75984-ed10-44a5-aaef-7df6339cb715/v1_terminus-18.pf2	26835	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:38.789389
+57b3573c-789d-434c-8199-2460a3a78085	4718316a-6873-4d00-98a3-9a045ab5a52c	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/f1364235-a55f-4ab5-8fc5-fe83b8889fdf/v1_select_w.png	280	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:38.802538
+e3b5147e-09bd-4ce8-8f78-545b5610d8e9	eef6c23d-aca6-4b18-9067-958bdfb2e07e	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/694f42c5-49e6-4dcb-a182-2343b978e7b5/v1_terminal_box_w.png	952	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:38.814401
+f01ae881-d6c6-4986-b620-b89514e69658	88fa3de6-dc7a-497f-9291-4b9ff04db1d9	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/382c35c2-dfb2-4787-b7a9-30db39b9bd4f/v1_terminal_box_s.png	963	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:38.826809
+79ce2f14-2c24-4fab-8f4c-26a2e3b5606b	52596177-7de9-46d8-9e7b-4f22fa03bd7e	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/3cffa6c7-2fa8-4b28-b366-3fdad98fde78/v1_dejavu_sans_14.pf2	185427	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:38.839907
+0b6db47e-7baf-4cbe-b37c-3cbf0770d04f	04e1e7b1-2cd3-4049-af5c-7c7011bb9337	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/358b5a6e-32fa-475c-a684-4c9a37b7a122/v1_dejavu_sans_48.pf2	868265	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:38.855484
+6febaafa-92ab-4826-9238-efc8a4b7d9d8	1016dab7-36e4-4e15-aaab-7e31ff1bb33b	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/60b57528-dee8-4a19-9824-895c2f60d410/v1_terminus-14.pf2	23941	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:38.8686
+3615c0d4-7f0a-463b-828f-b70b1bd82274	5219a79d-eb04-4362-8464-febd47725d9b	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/73c2ee92-336e-4747-acd9-0a3bf894273b/v1_background.jpg	634281	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:38.986885
+56d83ac7-d5a7-4ce6-8312-fb2ffd01682f	927bf282-3958-4126-9a93-0e3052ac6b4c	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/82493dbf-128f-4f69-9390-aa8d6a6bcddf/v1_terminal_box_ne.png	1115	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.001717
+33d75cb8-aa91-4fd8-961d-c58184070a7d	384a1d81-591d-43b4-b9e7-07548e0f6f62	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/633f1599-1b0b-4bc4-a8cc-f00591469478/v1_terminus-12.pf2	21895	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.014509
+c66f8c2a-5ce7-4146-b710-1a9bf7ece522	10628d04-533f-4d1d-8b89-3058476a1b25	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/2ac0d65d-2191-423b-ab30-248fcd6622e0/v1_dejavu_32.pf2	452923	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.02767
+1946a0f3-c99a-4f71-989d-fe13a8cc89bf	778cae3e-2115-4c1d-9bbe-7bc9cadecaac	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/fcd53b08-5156-48a6-90e8-9364d0afe997/v1_dejavu_sans_12.pf2	168761	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.04087
+7023696a-a46d-4edd-9961-8d855279f273	db8c4fb7-4fb5-46b7-b107-cac271a79b16	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/b530293e-9b83-461e-8d6c-0912a2c66553/v1_dejavu_sans_24.pf2	308972	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.054505
+6d009667-7d9b-4bfd-82e3-fbec9fd02ba3	f56196c4-19c9-4a47-8f32-6d91fbd92c8b	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/27e49efb-87d7-4f6c-824e-426fc1ead1f0/v1_terminal_box_c.png	976	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.06729
+acd9b6cb-26ac-4b58-8186-f57f13f33054	53edf194-0e85-4765-942f-59968e1f9239	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/d33d69b2-b22d-4503-9435-f2e4210869d9/v1_kbd.png	470	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.080235
+865f4b79-b53b-4262-9cb5-21d956b95a7b	6bc1bf98-69d2-4305-ad2d-9bc4922b923c	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/4cbd05da-2ebc-4fe8-96dc-647c9c86eef2/v1_antergos.png	1125	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.093099
+cf34f691-6186-4f65-8040-a98facbc0326	e4f64aa2-b7f0-4127-a687-98f8350a8735	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/4050d707-bf8f-48fa-bb9a-16d8e067bc7b/v1_find.none.png	808	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.106317
+295ba5c6-6eb7-411d-9bc4-e4295d3464fb	3a3b446e-f68b-4463-8502-2b11488d62f5	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/95ddcb98-a1b5-4f80-938e-1fd8dc48b4a2/v1_arcolinux.png	483	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.11919
+976649aa-7d7c-41fd-ab86-41ba45c98c5b	4d349e7e-37a6-4187-aa0f-25f9a9f165f3	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/fc912afe-283a-4761-b730-6f50c0d9a784/v1_unset.png	652	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.131984
+f46c0d10-7ec3-4225-9a25-f7831ffcc489	14fa61be-99ce-4491-8c0b-b1890558cff9	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/20672057-286e-4d5c-9b2e-9499f64b4212/v1_endeavouros.png	1312	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.144879
+72c6b190-8817-4ac3-8cd0-7e819206d7f6	26549bf0-7dae-4423-b196-62805c120a13	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/db3c68b5-7f59-4991-8d02-02aa001f3eb1/v1_arch.png	881	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.158008
+d823b4af-2f8a-4d72-847d-78da4c758138	cdcdc8e0-a091-4da9-8c41-6d978e443622	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/88adeb5b-ea06-4866-8e34-5a4784f390fd/v1_shutdown.png	909	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.170487
+082ee7b4-cb23-473c-aa05-9dd0af60c4d4	60012284-8a0f-4e18-b9b1-98445e65b669	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/171fd0b4-e295-407b-b4f7-d7fd39490944/v1_windows.png	598	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.183851
+0bb12122-79c8-44b2-97e1-94ea2ba1f624	4983994f-943e-465e-ba10-6b90ca99cdf1	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/39d4853f-56b9-40f0-a569-a1b11cca3dcd/v1_lubuntu.png	1188	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.196832
+6163bf7e-e53d-43d1-bc5c-3b7b42c8cb5d	4bdc7aae-c38d-48da-a2d4-533565440478	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/c3cdfa32-ffeb-4a07-8301-0690274c0722/v1_steamos.png	1082	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.210397
+3ecb6159-0ee5-46e5-9e24-3ccb7c102548	42d2f0e8-c657-4ccb-b5ee-4642e2603de5	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/2bcb9fca-d183-4d6d-983a-d8a40b9c4fbd/v1_void.png	1256	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.223853
+8394834d-916d-42b7-a535-883d7fbba5a1	7b9241c4-51a3-4cea-9000-9a91c476bbd9	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/480316fa-1c1e-43f8-b4b8-4db6a1ab821a/v1_unknown.png	1397	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.237138
+eb882dff-1466-4893-a4e1-9e0e6f51a4d4	084e0143-b7c3-426e-b45b-725f3cbab1b9	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/68800387-115a-44d4-b85b-c0f3ff5067c6/v1_linux.png	1397	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.249289
+9937d325-4ace-4347-93fc-9d02c16e9ef0	96911736-acf4-4cc4-bed0-2a10ebf513d0	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/5e7858d8-450a-4068-9e75-19d34b761b49/v1_chakra.png	1255	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.262027
+c585c6f6-2ef5-4d67-b78a-e6c071df8973	9864445a-dfc1-4001-b18a-65165b55c686	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/5ba5fbed-10c9-4558-92bd-1452d662566a/v1_kubuntu.png	1291	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.275414
+f5fe1f84-ee32-43e6-910c-c9ed00cb097b	e489eb01-f97e-4deb-9c2c-36446e4a872d	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/d2a9aedb-3337-4626-8847-f0d8b4b6fe86/v1_tz.png	818	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.287953
+cc6ab753-861c-4214-a809-62f69012bb78	01596948-9ece-4640-b42e-08860a0cbe2b	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/19bf1ec7-722e-44c0-a731-acd7ca45e8da/v1_mageia.png	1397	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.301117
+4ed7842e-5534-4cba-a4e8-317398517168	c64392a3-492b-4785-82a4-02d923458d8b	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/38330fbc-b85a-4f3b-9f1e-77ae8e42f94b/v1_help.png	480	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.314038
+aeb59caa-762a-4e95-b1a8-bf8e7d58fa1f	8a1deb0e-b2ea-4951-8632-2e5f04ef7ff1	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/8abaf400-5fe0-4096-b8db-16ffd2ae20dc/v1_manjaro.png	388	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.326999
+8afbd7f7-46e3-4431-b4f1-6f7dbdea1859	3432622a-ca22-489c-b40d-4ae62f0116e6	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/e5a2a2c8-51a7-45f7-89f6-5d8c1a85fe3c/v1_edit.png	418	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.34
+47771789-98b7-4ad1-8037-c89b30f6ba76	5907cd4b-49dc-4122-ae7e-b1066b0c4307	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/2192bda0-9e49-4e29-9fc6-693ba9f180eb/v1_archlinux.png	881	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.353207
+03002d40-7fb3-497f-8022-a9a2969bd9e2	8a11d530-54c8-40dd-827c-1394e294d7c3	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/da44a0fc-1aa7-4230-9cc8-2663ab7aa733/v1_memtest.png	793	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.366102
+c78f7e1e-ca78-4a2c-84cf-4ef26a56277e	e8879225-6f91-4d20-bdc8-a2e8d9c899f5	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/fc708731-a961-4808-b4f9-8f58f712c7af/v1_find.efi.png	699	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.378917
+543a5bb8-715b-4023-9f26-f67017cc4f5e	13a2b815-d32f-4f27-bffc-4db069ce5507	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/3e94e010-646f-4bd5-a42d-3d853e282255/v1_debian.png	1096	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.391628
+66109590-0989-44cd-b59c-0c7b37b03715	983171f3-29d2-4f24-affc-f1359d163b86	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/73ffb5da-8d5c-40df-afdb-b5c3a45fdbcb/v1_devuan.png	788	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.404073
+4c0c071a-c107-4e9c-aa65-2377580cc474	3508e577-ccf8-4d95-b269-effab468a5e0	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/8787fa92-2bd8-4cde-aedd-3ffcd9ce8df5/v1_gentoo.png	863	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.417033
+70727e8c-70ef-41d5-9722-b53f2d25e8cb	fb1c2239-465a-4f02-91fa-723fd260eace	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/36743cf5-83f9-43ca-97d5-95cb2722732f/v1_korora.png	1113	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.429058
+3df19c50-d88e-414e-bc4f-3ac8df1e1b52	05ea7b08-b471-486b-827c-a26cee446f59	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/773e8c03-9507-410a-970d-948d461824ea/v1_kali.png	1059	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.442443
+2eda7633-fc7f-4b25-bdf3-2a448efe7fe8	ca03f7af-7eb1-4a8d-8d99-8756b8b5dfb1	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/72747a16-538b-4681-987f-676e129432b5/v1_pop-os.png	1424	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.454274
+72715c34-f979-4bdc-9359-ca037bd85841	06a1a11b-721e-4326-9e5c-0a6e984a2eba	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/fe5461f7-3e3e-4989-bbb0-3e0c5d1f65c3/v1_opensuse.png	1327	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.466776
+97c56861-5bee-4718-b006-bb8195bbea84	49ccd290-6ff1-4043-8931-6617a14ceaf7	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/eb025863-4788-46a0-bc9c-fa18352d0491/v1_deepin.png	1208	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.479043
+3ff8a986-4061-485a-b833-f75e0c2b1116	1fb40ff7-8fbd-4fa8-ac79-b26cde496fd1	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/ce5067fb-5dcc-421d-bb74-2f5dfb08cf94/v1_recovery.png	707	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.491285
+0eb4014e-72cf-45b5-a085-7c9c88d14cc5	cedef217-c708-4862-8e8e-739f9686bbd9	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/d83bc76a-7881-4676-b5f6-bc672175c5e3/v1_restart.png	709	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.50318
+ae971bb4-d8d3-4295-81b2-f81b79163860	26b21ad1-ea48-4706-9634-7e3a3e0b30bb	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/757b502d-12e7-4f15-aefc-6784c475819e/v1_lfs.png	1397	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.515665
+f489d7cf-89bc-4f5b-a899-e506e90ad319	b0d3524e-93f0-4bfb-bdef-557b8fe4fdf9	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/febc1478-d2e9-4e9a-8cf3-1909ab706bc7/v1_ubuntu.png	1261	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.527488
+b96fe5a1-afe5-43b6-a6f6-3bca657bd71f	e66ed53d-1eaa-489d-aa0a-439b6bba5eea	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/22c9e8f4-3462-480a-9a66-034692bae8a7/v1_elementary.png	1577	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.539892
+d4c90f0a-3023-40c4-867c-90b6627d5dd9	2867ad3a-548c-422e-a1f6-b83958494c08	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/9fc3af51-0d83-4723-ac37-90d97600fe2c/v1_gnu-linux.png	1397	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.55228
+dc18b6d3-2d20-4674-8442-f88ac635111b	056f499d-47a5-48b9-9cfa-d30a097968ad	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/82e6c693-43fa-4242-9ee5-3cbe953db3d7/v1_cancel.png	541	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.564976
+b8ee9b65-fb00-40c1-9682-2d0de4e7ff35	74bf577b-f447-4b48-9b07-176e1263eb7e	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/3a7d79f1-0950-4256-b7fb-01f3063bfe3e/v1_linuxmint.png	1003	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.578218
+dc92dfe6-5b2a-4733-acca-1dbb73ee7569	4f503ebb-dd9d-499d-b567-351f6e6161bc	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/58b13820-4191-4e0e-b5a5-86f4b7dee641/v1_lang.png	1202	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.591133
+b0e0c579-3a39-4bcd-869b-a99899360952	1ea19964-82d5-474e-a115-b9211d2db070	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/49fc9d09-b368-4454-b68a-07de65b8b28c/v1_type.png	385	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.603451
+240220fb-c0ee-4b94-bbbe-c2eb4749ff34	6a4fe692-3d9c-4b9f-8adf-5457940c9d70	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/d33d6617-7d57-45a1-89c7-64a3ef6d9c8d/v1_efi.png	665	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.616203
+85f11e77-02d1-452d-87b3-cf9125f16c57	1973cd18-0fa9-4592-a93a-d0d98060b98f	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/a4a72e66-ad22-4ddd-ac5f-6374d3f3d80e/v1_Manjaro.i686.png	388	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.628357
+80d63b03-26cd-4bb2-a0e9-71ae7d6ac590	0300dbcf-a84b-4962-ae29-6cc1cfe3a86b	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/bd63fd2f-c843-468a-a74b-9591603c70fb/v1_solus.png	1199	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.641024
+0331981c-543e-4661-95a1-8668d7583cc5	0f633a6f-1976-4f55-b53a-2a1975f46b82	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/03b3342d-3abf-44d9-b706-c8ee88410d80/v1_kaos.png	995	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.654413
+1b99896f-0f51-4966-8e91-07a65a83e825	00765a9c-b721-415a-b110-af287ba64b7e	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/ea30f0a4-ca3b-4ec5-90d6-6dfa0ac0263a/v1_Manjaro.x86_64.png	388	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.667134
+b2e7f72b-5077-47d8-9be5-eddc88e9bf93	1f32a6ee-5916-4e72-ae66-4fc0d33bf392	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/6c2465d4-9e60-4280-9ef9-59e0ce60c312/v1_driver.png	793	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.679734
+7b6aff49-5482-415f-abc3-5ed6ae21d2c9	847f1d1d-341d-4289-a43b-0332f7bdaa0a	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/bf16fd52-f604-4cad-9310-f1bbc468e3ae/v1_siduction.png	1147	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.692845
+62df4dec-f7eb-4764-8307-271382cd5e63	0a6fe912-c4b8-409b-828a-b6309afc551b	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/10fecf9c-35d2-488f-ac3b-054a6d59a67b/v1_fedora.png	1057	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.705417
+5972731c-d241-4c28-a735-edd01755a02c	111b9b8c-474a-4d3c-a593-0350366a850a	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/5e6a68ec-f24c-4dcc-84e5-9e71b4fb7287/v1_macosx.png	880	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.717964
+64167773-fd57-4b32-89fc-9e24f7547844	f3a03194-c48f-4206-ab1e-16b77bf3e61c	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/b524fa56-ddf1-4d8d-a120-b599deddabd5/v1_xubuntu.png	1048	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.730902
+93792be6-f5da-4a11-9740-f9289ab93374	b1b2a192-290b-4ad4-99f0-0cccf13578e4	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/2f1fcec2-7c69-4389-b824-0ad376d667d8/v1_terminus-16.pf2	24214	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.743354
+ab5a37f1-62f0-4179-b014-4daa0003dfa3	6e934b16-d0eb-4649-a25d-5a11035df766	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/9cba1283-91b4-45ea-97eb-94e950b7518b/v1_terminal_box_se.png	1102	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.755416
+ffc9906b-dbae-41ba-b094-1debcbceb175	b855eb2c-5d0f-4bda-ba4d-1a9380d05638	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/a4b8c6c2-b6fa-4b9d-98fd-407714bd5e28/v1_theme.txt	903	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.768291
+9bd2cd9a-b67e-46f9-8351-6ddd7964e743	635e9b21-fecf-4b4a-9c03-2c0f3c9fd4c8	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/7996fd3f-78b4-4065-8b34-9af485d85984/v1_terminal_box_e.png	952	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.779852
+5fae63c3-d30f-44e2-875b-40accbb2688f	2038baab-863a-4d89-9a33-034f146672e1	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/b145c38a-ba6d-4e4f-8df3-c2a50641c4d9/v1_select_e.png	289	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.792038
+9777363a-8862-4baf-97a9-f750975f4877	03a116dc-7b0d-4f55-963e-4fde290ca06b	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/1a51c9f6-cece-452e-a1a9-816c7ecbce1b/v1_terminal_box_sw.png	1107	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.804281
+1fc1722e-168c-414a-a409-8346d6081acd	0cad7453-bd5b-4056-a9f6-5974cac91977	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/bad70a79-d880-4041-9140-7d7c3af456dc/v1_terminal_box_n.png	963	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:29:39.816298
+1783fae0-6f6f-4905-9f2d-606ad25e4d24	22db6071-a74c-4e6c-b175-62da597765cb	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/c251e7db-703e-4e69-ad44-10f6bea814f6/v1_Zaroor.mp3	5630975	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:30:00.789842
+8fbae25d-2b4c-4676-9ba3-335e9d3ce24f	ca1b9706-fbf9-485a-89f6-24cdbd1c1678	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/be3996e7-c390-43e3-9213-f3f6141d0193/v1_Ek Din Aap.mp3	8221954	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:30:02.792901
+63793352-f51b-48d5-b896-c3a156602ab9	257433d7-d0f1-4963-903f-1f7e670f3d67	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/3b67c5db-c04e-4b95-9a35-067193ef6318/v1_Isq Risk.mp3	8440143	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:30:04.18116
+c0eb8407-e4d3-4b03-820e-8d12ca50ddf0	901c7cdd-543a-4aa0-93df-38cc7273ca58	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/c218ba61-0e29-4a17-b470-3dd4a379f9c9/v1_YE TUNE KYA KIYA.mp3	10417106	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:30:06.216031
+675b3991-94ff-4107-a615-768d8e01641b	1f983c9f-41d9-48fe-874a-7be1713d3ec4	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/032f0844-6ebf-43f8-b054-614a2605df61/v1_Risk.mp3	6149209	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:30:07.733951
+a1febc32-cc28-4060-a5c9-139af34bed6d	fa07807a-2ace-4861-9c02-3133c42666b4	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/0287d9f0-f0cb-4300-898d-b3f1fb73c3f5/v1_Sahiba.mp3	7099731	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:30:09.783268
+ecf51e38-dd49-476c-a097-3721b51706a2	7e9ead1c-004d-400b-91f1-32cf830ea2b7	1	user_0175f133-1e13-41fc-9b39-ab3921c962af/001429ae-6e4e-4b17-9f02-5faaffed5170/v1_Moral of the Story.mp3	6320592	0175f133-1e13-41fc-9b39-ab3921c962af	2025-11-03 11:30:19.01623
+\.
+
+
+--
+-- Data for Name: files; Type: TABLE DATA; Schema: public; Owner: user
+--
+
+COPY public.files (id, name, original_name, mime_type, size, storage_path, owner_id, parent_folder_id, status, is_starred, thumbnail_path, preview_available, version, current_version_id, created_at, updated_at, trashed_at, last_accessed_at) FROM stdin;
+e6742eb6-449f-4ccf-a964-769bd5240857	ray-so-export (2).png	ray-so-export (2).png	image/png	2051108	user_0175f133-1e13-41fc-9b39-ab3921c962af/6724f656-bf8e-4dbb-ab95-e19ecc58ba06/v1_ray-so-export (2).png	0175f133-1e13-41fc-9b39-ab3921c962af	\N	active	f	6724f656-bf8e-4dbb-ab95-e19ecc58ba06.jpg	t	1	\N	2025-11-03 11:29:04.466036	2025-11-03 11:29:04.466036	\N	\N
+523d6156-bb1e-4333-ba5c-85af302a6546	ray-so-export (1).png	ray-so-export (1).png	image/png	1435388	user_0175f133-1e13-41fc-9b39-ab3921c962af/6a6664cc-7113-4992-8e21-40d8e30d7e1e/v1_ray-so-export (1).png	0175f133-1e13-41fc-9b39-ab3921c962af	\N	active	f	6a6664cc-7113-4992-8e21-40d8e30d7e1e.jpg	t	1	\N	2025-11-03 11:29:07.549909	2025-11-03 11:29:07.549909	\N	\N
+7293b6d2-4286-42ae-a040-e040811884c5	Expressions for Discussion and Debate new.pdf	Expressions for Discussion and Debate new.pdf	application/pdf	36912	user_0175f133-1e13-41fc-9b39-ab3921c962af/3639e1aa-7067-4739-84d1-961acd42d7c4/v1_Expressions for Discussion and Debate new.pdf	0175f133-1e13-41fc-9b39-ab3921c962af	\N	active	f	\N	t	1	\N	2025-11-03 11:29:12.777282	2025-11-03 11:29:12.777282	\N	\N
+9035abe4-06d7-4055-b9a4-2b9671c3b471	notely-474107-b7a125a8fdaf.json	notely-474107-b7a125a8fdaf.json	application/json	2369	user_0175f133-1e13-41fc-9b39-ab3921c962af/1f56faef-66a7-410d-9295-06db134130d1/v1_notely-474107-b7a125a8fdaf.json	0175f133-1e13-41fc-9b39-ab3921c962af	fd9da574-b29e-446e-b942-15f82e0abc62	active	f	\N	f	1	\N	2025-11-03 11:29:18.877363	2025-11-03 11:29:18.877363	\N	\N
+e27ed200-aa80-4349-8ddc-f5c349fb2bd0	Conditional.pdf	Conditional.pdf	application/pdf	714011	user_0175f133-1e13-41fc-9b39-ab3921c962af/d604925c-84e1-451b-8c5f-a675481db58f/v1_Conditional.pdf	0175f133-1e13-41fc-9b39-ab3921c962af	fd9da574-b29e-446e-b942-15f82e0abc62	active	f	\N	t	1	\N	2025-11-03 11:29:19.902012	2025-11-03 11:29:19.902012	\N	\N
+922e0a6b-6bda-44c0-8584-f25db6ef8549	Language-On-Schools-English-Irregular-Verbs-List (1).pdf	Language-On-Schools-English-Irregular-Verbs-List (1).pdf	application/pdf	71999	user_0175f133-1e13-41fc-9b39-ab3921c962af/f91e86d2-1116-4a5a-b96a-ed1bc46fd35d/v1_Language-On-Schools-English-Irregular-Verbs-List (1).pdf	0175f133-1e13-41fc-9b39-ab3921c962af	fd9da574-b29e-446e-b942-15f82e0abc62	active	f	\N	t	1	\N	2025-11-03 11:29:21.034749	2025-11-03 11:29:21.034749	\N	\N
+f4ea7908-3394-4a4c-a923-8371a5305b99	ray-so-export (1).png	ray-so-export (1).png	image/png	1435388	user_0175f133-1e13-41fc-9b39-ab3921c962af/850d679f-8730-45aa-962b-a0e8e3f23f3a/v1_ray-so-export (1).png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	850d679f-8730-45aa-962b-a0e8e3f23f3a.jpg	t	1	\N	2025-11-03 11:29:25.867127	2025-11-03 11:29:25.867127	\N	\N
+5113b33c-9242-4bfd-8031-8340682e3278	Sounds of English Consonant Sounds.pdf	Sounds of English Consonant Sounds.pdf	application/pdf	164419	user_0175f133-1e13-41fc-9b39-ab3921c962af/cc823a72-3bad-4cb8-a84a-339323261d76/v1_Sounds of English Consonant Sounds.pdf	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	\N	t	1	\N	2025-11-03 11:29:27.427304	2025-11-03 11:29:27.427304	\N	\N
+5080fbe8-c4ce-443f-b48d-67aecc966eb2	Correction of Errors.pdf	Correction of Errors.pdf	application/pdf	125931	user_0175f133-1e13-41fc-9b39-ab3921c962af/e672df30-edf4-437c-a851-737d6e0c489c/v1_Correction of Errors.pdf	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	\N	t	1	\N	2025-11-03 11:29:28.651199	2025-11-03 11:29:28.651199	\N	\N
+2f72623b-7eb2-4e1c-a4c6-bb51a9b0e7cf	Language-On-Schools-English-Irregular-Verbs-List (1).pdf	Language-On-Schools-English-Irregular-Verbs-List (1).pdf	application/pdf	71999	user_0175f133-1e13-41fc-9b39-ab3921c962af/fa7dc552-4bfd-4c5e-9a05-47a72ce3677a/v1_Language-On-Schools-English-Irregular-Verbs-List (1).pdf	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	\N	t	1	\N	2025-11-03 11:29:29.884053	2025-11-03 11:29:29.884053	\N	\N
+3edd34c0-185a-40c9-807f-84cafb5e58ee	Math 1 - Week 3 - GA.pdf	Math 1 - Week 3 - GA.pdf	application/pdf	468209	user_0175f133-1e13-41fc-9b39-ab3921c962af/f248ecc7-83dd-4abe-9ad4-d51784e94059/v1_Math 1 - Week 3 - GA.pdf	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	\N	t	1	\N	2025-11-03 11:29:31.284906	2025-11-03 11:29:31.284906	\N	\N
+9eadf80f-c973-492f-b2ed-3e83e18bbde6	LICENSE	LICENSE	application/octet-stream	35141	user_0175f133-1e13-41fc-9b39-ab3921c962af/23e8c257-4ff2-4ad0-8e95-bbe227b51736/v1_LICENSE	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	\N	f	1	\N	2025-11-03 11:29:38.719582	2025-11-03 11:29:38.719582	\N	\N
+ca4ddaff-a70c-42e9-bbcc-4f58b99ebe8f	install.sh	install.sh	text/x-sh	3263	user_0175f133-1e13-41fc-9b39-ab3921c962af/7337dbfa-de8b-4414-9a33-a28e096b0ac3/v1_install.sh	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	\N	f	1	\N	2025-11-03 11:29:38.734514	2025-11-03 11:29:38.734514	\N	\N
+0932e718-811c-4e8f-ae54-5e8287984fd7	terminal_box_nw.png	terminal_box_nw.png	image/png	1094	user_0175f133-1e13-41fc-9b39-ab3921c962af/f6fad2e1-a218-4252-9724-1c6c786398a3/v1_terminal_box_nw.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	f6fad2e1-a218-4252-9724-1c6c786398a3.jpg	t	1	\N	2025-11-03 11:29:38.748492	2025-11-03 11:29:38.748492	\N	\N
+552340b4-d1a8-4c2b-8c01-39693424d2f2	dejavu_sans_16.pf2	dejavu_sans_16.pf2	application/octet-stream	203880	user_0175f133-1e13-41fc-9b39-ab3921c962af/22c840d0-2632-4698-99fd-1ed7532dc9d9/v1_dejavu_sans_16.pf2	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	\N	f	1	\N	2025-11-03 11:29:38.761622	2025-11-03 11:29:38.761622	\N	\N
+b6b61243-084d-4388-a429-b1a55a826e9d	select_c.png	select_c.png	image/png	181	user_0175f133-1e13-41fc-9b39-ab3921c962af/64bfe31a-ee4b-4506-bafd-90b838f77dfa/v1_select_c.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	64bfe31a-ee4b-4506-bafd-90b838f77dfa.jpg	t	1	\N	2025-11-03 11:29:38.774659	2025-11-03 11:29:38.774659	\N	\N
+5d46e2e1-0b92-4ac7-b1bb-01db0e9c1eb4	terminus-18.pf2	terminus-18.pf2	application/octet-stream	26835	user_0175f133-1e13-41fc-9b39-ab3921c962af/b5a75984-ed10-44a5-aaef-7df6339cb715/v1_terminus-18.pf2	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	\N	f	1	\N	2025-11-03 11:29:38.786978	2025-11-03 11:29:38.786978	\N	\N
+4718316a-6873-4d00-98a3-9a045ab5a52c	select_w.png	select_w.png	image/png	280	user_0175f133-1e13-41fc-9b39-ab3921c962af/f1364235-a55f-4ab5-8fc5-fe83b8889fdf/v1_select_w.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	f1364235-a55f-4ab5-8fc5-fe83b8889fdf.jpg	t	1	\N	2025-11-03 11:29:38.800361	2025-11-03 11:29:38.800361	\N	\N
+eef6c23d-aca6-4b18-9067-958bdfb2e07e	terminal_box_w.png	terminal_box_w.png	image/png	952	user_0175f133-1e13-41fc-9b39-ab3921c962af/694f42c5-49e6-4dcb-a182-2343b978e7b5/v1_terminal_box_w.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	694f42c5-49e6-4dcb-a182-2343b978e7b5.jpg	t	1	\N	2025-11-03 11:29:38.812085	2025-11-03 11:29:38.812085	\N	\N
+88fa3de6-dc7a-497f-9291-4b9ff04db1d9	terminal_box_s.png	terminal_box_s.png	image/png	963	user_0175f133-1e13-41fc-9b39-ab3921c962af/382c35c2-dfb2-4787-b7a9-30db39b9bd4f/v1_terminal_box_s.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	382c35c2-dfb2-4787-b7a9-30db39b9bd4f.jpg	t	1	\N	2025-11-03 11:29:38.82454	2025-11-03 11:29:38.82454	\N	\N
+52596177-7de9-46d8-9e7b-4f22fa03bd7e	dejavu_sans_14.pf2	dejavu_sans_14.pf2	application/octet-stream	185427	user_0175f133-1e13-41fc-9b39-ab3921c962af/3cffa6c7-2fa8-4b28-b366-3fdad98fde78/v1_dejavu_sans_14.pf2	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	\N	f	1	\N	2025-11-03 11:29:38.837305	2025-11-03 11:29:38.837305	\N	\N
+04e1e7b1-2cd3-4049-af5c-7c7011bb9337	dejavu_sans_48.pf2	dejavu_sans_48.pf2	application/octet-stream	868265	user_0175f133-1e13-41fc-9b39-ab3921c962af/358b5a6e-32fa-475c-a684-4c9a37b7a122/v1_dejavu_sans_48.pf2	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	\N	f	1	\N	2025-11-03 11:29:38.853406	2025-11-03 11:29:38.853406	\N	\N
+1016dab7-36e4-4e15-aaab-7e31ff1bb33b	terminus-14.pf2	terminus-14.pf2	application/octet-stream	23941	user_0175f133-1e13-41fc-9b39-ab3921c962af/60b57528-dee8-4a19-9824-895c2f60d410/v1_terminus-14.pf2	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	\N	f	1	\N	2025-11-03 11:29:38.866133	2025-11-03 11:29:38.866133	\N	\N
+5219a79d-eb04-4362-8464-febd47725d9b	background.jpg	background.jpg	image/jpeg	634281	user_0175f133-1e13-41fc-9b39-ab3921c962af/73c2ee92-336e-4747-acd9-0a3bf894273b/v1_background.jpg	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	73c2ee92-336e-4747-acd9-0a3bf894273b.jpg	t	1	\N	2025-11-03 11:29:38.983243	2025-11-03 11:29:38.983243	\N	\N
+927bf282-3958-4126-9a93-0e3052ac6b4c	terminal_box_ne.png	terminal_box_ne.png	image/png	1115	user_0175f133-1e13-41fc-9b39-ab3921c962af/82493dbf-128f-4f69-9390-aa8d6a6bcddf/v1_terminal_box_ne.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	82493dbf-128f-4f69-9390-aa8d6a6bcddf.jpg	t	1	\N	2025-11-03 11:29:38.999103	2025-11-03 11:29:38.999103	\N	\N
+384a1d81-591d-43b4-b9e7-07548e0f6f62	terminus-12.pf2	terminus-12.pf2	application/octet-stream	21895	user_0175f133-1e13-41fc-9b39-ab3921c962af/633f1599-1b0b-4bc4-a8cc-f00591469478/v1_terminus-12.pf2	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	\N	f	1	\N	2025-11-03 11:29:39.0124	2025-11-03 11:29:39.0124	\N	\N
+10628d04-533f-4d1d-8b89-3058476a1b25	dejavu_32.pf2	dejavu_32.pf2	application/octet-stream	452923	user_0175f133-1e13-41fc-9b39-ab3921c962af/2ac0d65d-2191-423b-ab30-248fcd6622e0/v1_dejavu_32.pf2	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	\N	f	1	\N	2025-11-03 11:29:39.025242	2025-11-03 11:29:39.025242	\N	\N
+778cae3e-2115-4c1d-9bbe-7bc9cadecaac	dejavu_sans_12.pf2	dejavu_sans_12.pf2	application/octet-stream	168761	user_0175f133-1e13-41fc-9b39-ab3921c962af/fcd53b08-5156-48a6-90e8-9364d0afe997/v1_dejavu_sans_12.pf2	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	\N	f	1	\N	2025-11-03 11:29:39.038583	2025-11-03 11:29:39.038583	\N	\N
+db8c4fb7-4fb5-46b7-b107-cac271a79b16	dejavu_sans_24.pf2	dejavu_sans_24.pf2	application/octet-stream	308972	user_0175f133-1e13-41fc-9b39-ab3921c962af/b530293e-9b83-461e-8d6c-0912a2c66553/v1_dejavu_sans_24.pf2	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	\N	f	1	\N	2025-11-03 11:29:39.051969	2025-11-03 11:29:39.051969	\N	\N
+f56196c4-19c9-4a47-8f32-6d91fbd92c8b	terminal_box_c.png	terminal_box_c.png	image/png	976	user_0175f133-1e13-41fc-9b39-ab3921c962af/27e49efb-87d7-4f6c-824e-426fc1ead1f0/v1_terminal_box_c.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	27e49efb-87d7-4f6c-824e-426fc1ead1f0.jpg	t	1	\N	2025-11-03 11:29:39.06506	2025-11-03 11:29:39.06506	\N	\N
+53edf194-0e85-4765-942f-59968e1f9239	kbd.png	kbd.png	image/png	470	user_0175f133-1e13-41fc-9b39-ab3921c962af/d33d69b2-b22d-4503-9435-f2e4210869d9/v1_kbd.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	d33d69b2-b22d-4503-9435-f2e4210869d9.jpg	t	1	\N	2025-11-03 11:29:39.077787	2025-11-03 11:29:39.077787	\N	\N
+6bc1bf98-69d2-4305-ad2d-9bc4922b923c	antergos.png	antergos.png	image/png	1125	user_0175f133-1e13-41fc-9b39-ab3921c962af/4cbd05da-2ebc-4fe8-96dc-647c9c86eef2/v1_antergos.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	4cbd05da-2ebc-4fe8-96dc-647c9c86eef2.jpg	t	1	\N	2025-11-03 11:29:39.090927	2025-11-03 11:29:39.090927	\N	\N
+e4f64aa2-b7f0-4127-a687-98f8350a8735	find.none.png	find.none.png	image/png	808	user_0175f133-1e13-41fc-9b39-ab3921c962af/4050d707-bf8f-48fa-bb9a-16d8e067bc7b/v1_find.none.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	4050d707-bf8f-48fa-bb9a-16d8e067bc7b.jpg	t	1	\N	2025-11-03 11:29:39.10403	2025-11-03 11:29:39.10403	\N	\N
+3a3b446e-f68b-4463-8502-2b11488d62f5	arcolinux.png	arcolinux.png	image/png	483	user_0175f133-1e13-41fc-9b39-ab3921c962af/95ddcb98-a1b5-4f80-938e-1fd8dc48b4a2/v1_arcolinux.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	95ddcb98-a1b5-4f80-938e-1fd8dc48b4a2.jpg	t	1	\N	2025-11-03 11:29:39.116597	2025-11-03 11:29:39.116597	\N	\N
+4d349e7e-37a6-4187-aa0f-25f9a9f165f3	unset.png	unset.png	image/png	652	user_0175f133-1e13-41fc-9b39-ab3921c962af/fc912afe-283a-4761-b730-6f50c0d9a784/v1_unset.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	fc912afe-283a-4761-b730-6f50c0d9a784.jpg	t	1	\N	2025-11-03 11:29:39.129448	2025-11-03 11:29:39.129448	\N	\N
+14fa61be-99ce-4491-8c0b-b1890558cff9	endeavouros.png	endeavouros.png	image/png	1312	user_0175f133-1e13-41fc-9b39-ab3921c962af/20672057-286e-4d5c-9b2e-9499f64b4212/v1_endeavouros.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	20672057-286e-4d5c-9b2e-9499f64b4212.jpg	t	1	\N	2025-11-03 11:29:39.142618	2025-11-03 11:29:39.142618	\N	\N
+26549bf0-7dae-4423-b196-62805c120a13	arch.png	arch.png	image/png	881	user_0175f133-1e13-41fc-9b39-ab3921c962af/db3c68b5-7f59-4991-8d02-02aa001f3eb1/v1_arch.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	db3c68b5-7f59-4991-8d02-02aa001f3eb1.jpg	t	1	\N	2025-11-03 11:29:39.155772	2025-11-03 11:29:39.155772	\N	\N
+cdcdc8e0-a091-4da9-8c41-6d978e443622	shutdown.png	shutdown.png	image/png	909	user_0175f133-1e13-41fc-9b39-ab3921c962af/88adeb5b-ea06-4866-8e34-5a4784f390fd/v1_shutdown.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	88adeb5b-ea06-4866-8e34-5a4784f390fd.jpg	t	1	\N	2025-11-03 11:29:39.168347	2025-11-03 11:29:39.168347	\N	\N
+60012284-8a0f-4e18-b9b1-98445e65b669	windows.png	windows.png	image/png	598	user_0175f133-1e13-41fc-9b39-ab3921c962af/171fd0b4-e295-407b-b4f7-d7fd39490944/v1_windows.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	171fd0b4-e295-407b-b4f7-d7fd39490944.jpg	t	1	\N	2025-11-03 11:29:39.181428	2025-11-03 11:29:39.181428	\N	\N
+4983994f-943e-465e-ba10-6b90ca99cdf1	lubuntu.png	lubuntu.png	image/png	1188	user_0175f133-1e13-41fc-9b39-ab3921c962af/39d4853f-56b9-40f0-a569-a1b11cca3dcd/v1_lubuntu.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	39d4853f-56b9-40f0-a569-a1b11cca3dcd.jpg	t	1	\N	2025-11-03 11:29:39.194527	2025-11-03 11:29:39.194527	\N	\N
+4bdc7aae-c38d-48da-a2d4-533565440478	steamos.png	steamos.png	image/png	1082	user_0175f133-1e13-41fc-9b39-ab3921c962af/c3cdfa32-ffeb-4a07-8301-0690274c0722/v1_steamos.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	c3cdfa32-ffeb-4a07-8301-0690274c0722.jpg	t	1	\N	2025-11-03 11:29:39.208102	2025-11-03 11:29:39.208102	\N	\N
+42d2f0e8-c657-4ccb-b5ee-4642e2603de5	void.png	void.png	image/png	1256	user_0175f133-1e13-41fc-9b39-ab3921c962af/2bcb9fca-d183-4d6d-983a-d8a40b9c4fbd/v1_void.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	2bcb9fca-d183-4d6d-983a-d8a40b9c4fbd.jpg	t	1	\N	2025-11-03 11:29:39.221703	2025-11-03 11:29:39.221703	\N	\N
+7b9241c4-51a3-4cea-9000-9a91c476bbd9	unknown.png	unknown.png	image/png	1397	user_0175f133-1e13-41fc-9b39-ab3921c962af/480316fa-1c1e-43f8-b4b8-4db6a1ab821a/v1_unknown.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	480316fa-1c1e-43f8-b4b8-4db6a1ab821a.jpg	t	1	\N	2025-11-03 11:29:39.234921	2025-11-03 11:29:39.234921	\N	\N
+084e0143-b7c3-426e-b45b-725f3cbab1b9	linux.png	linux.png	image/png	1397	user_0175f133-1e13-41fc-9b39-ab3921c962af/68800387-115a-44d4-b85b-c0f3ff5067c6/v1_linux.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	68800387-115a-44d4-b85b-c0f3ff5067c6.jpg	t	1	\N	2025-11-03 11:29:39.247085	2025-11-03 11:29:39.247085	\N	\N
+96911736-acf4-4cc4-bed0-2a10ebf513d0	chakra.png	chakra.png	image/png	1255	user_0175f133-1e13-41fc-9b39-ab3921c962af/5e7858d8-450a-4068-9e75-19d34b761b49/v1_chakra.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	5e7858d8-450a-4068-9e75-19d34b761b49.jpg	t	1	\N	2025-11-03 11:29:39.259653	2025-11-03 11:29:39.259653	\N	\N
+9864445a-dfc1-4001-b18a-65165b55c686	kubuntu.png	kubuntu.png	image/png	1291	user_0175f133-1e13-41fc-9b39-ab3921c962af/5ba5fbed-10c9-4558-92bd-1452d662566a/v1_kubuntu.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	5ba5fbed-10c9-4558-92bd-1452d662566a.jpg	t	1	\N	2025-11-03 11:29:39.273192	2025-11-03 11:29:39.273192	\N	\N
+e489eb01-f97e-4deb-9c2c-36446e4a872d	tz.png	tz.png	image/png	818	user_0175f133-1e13-41fc-9b39-ab3921c962af/d2a9aedb-3337-4626-8847-f0d8b4b6fe86/v1_tz.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	d2a9aedb-3337-4626-8847-f0d8b4b6fe86.jpg	t	1	\N	2025-11-03 11:29:39.285569	2025-11-03 11:29:39.285569	\N	\N
+01596948-9ece-4640-b42e-08860a0cbe2b	mageia.png	mageia.png	image/png	1397	user_0175f133-1e13-41fc-9b39-ab3921c962af/19bf1ec7-722e-44c0-a731-acd7ca45e8da/v1_mageia.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	19bf1ec7-722e-44c0-a731-acd7ca45e8da.jpg	t	1	\N	2025-11-03 11:29:39.299031	2025-11-03 11:29:39.299031	\N	\N
+c64392a3-492b-4785-82a4-02d923458d8b	help.png	help.png	image/png	480	user_0175f133-1e13-41fc-9b39-ab3921c962af/38330fbc-b85a-4f3b-9f1e-77ae8e42f94b/v1_help.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	38330fbc-b85a-4f3b-9f1e-77ae8e42f94b.jpg	t	1	\N	2025-11-03 11:29:39.311562	2025-11-03 11:29:39.311562	\N	\N
+8a1deb0e-b2ea-4951-8632-2e5f04ef7ff1	manjaro.png	manjaro.png	image/png	388	user_0175f133-1e13-41fc-9b39-ab3921c962af/8abaf400-5fe0-4096-b8db-16ffd2ae20dc/v1_manjaro.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	8abaf400-5fe0-4096-b8db-16ffd2ae20dc.jpg	t	1	\N	2025-11-03 11:29:39.324806	2025-11-03 11:29:39.324806	\N	\N
+3432622a-ca22-489c-b40d-4ae62f0116e6	edit.png	edit.png	image/png	418	user_0175f133-1e13-41fc-9b39-ab3921c962af/e5a2a2c8-51a7-45f7-89f6-5d8c1a85fe3c/v1_edit.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	e5a2a2c8-51a7-45f7-89f6-5d8c1a85fe3c.jpg	t	1	\N	2025-11-03 11:29:39.337673	2025-11-03 11:29:39.337673	\N	\N
+5907cd4b-49dc-4122-ae7e-b1066b0c4307	archlinux.png	archlinux.png	image/png	881	user_0175f133-1e13-41fc-9b39-ab3921c962af/2192bda0-9e49-4e29-9fc6-693ba9f180eb/v1_archlinux.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	2192bda0-9e49-4e29-9fc6-693ba9f180eb.jpg	t	1	\N	2025-11-03 11:29:39.350925	2025-11-03 11:29:39.350925	\N	\N
+8a11d530-54c8-40dd-827c-1394e294d7c3	memtest.png	memtest.png	image/png	793	user_0175f133-1e13-41fc-9b39-ab3921c962af/da44a0fc-1aa7-4230-9cc8-2663ab7aa733/v1_memtest.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	da44a0fc-1aa7-4230-9cc8-2663ab7aa733.jpg	t	1	\N	2025-11-03 11:29:39.363617	2025-11-03 11:29:39.363617	\N	\N
+e8879225-6f91-4d20-bdc8-a2e8d9c899f5	find.efi.png	find.efi.png	image/png	699	user_0175f133-1e13-41fc-9b39-ab3921c962af/fc708731-a961-4808-b4f9-8f58f712c7af/v1_find.efi.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	fc708731-a961-4808-b4f9-8f58f712c7af.jpg	t	1	\N	2025-11-03 11:29:39.376607	2025-11-03 11:29:39.376607	\N	\N
+13a2b815-d32f-4f27-bffc-4db069ce5507	debian.png	debian.png	image/png	1096	user_0175f133-1e13-41fc-9b39-ab3921c962af/3e94e010-646f-4bd5-a42d-3d853e282255/v1_debian.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	3e94e010-646f-4bd5-a42d-3d853e282255.jpg	t	1	\N	2025-11-03 11:29:39.388954	2025-11-03 11:29:39.388954	\N	\N
+983171f3-29d2-4f24-affc-f1359d163b86	devuan.png	devuan.png	image/png	788	user_0175f133-1e13-41fc-9b39-ab3921c962af/73ffb5da-8d5c-40df-afdb-b5c3a45fdbcb/v1_devuan.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	73ffb5da-8d5c-40df-afdb-b5c3a45fdbcb.jpg	t	1	\N	2025-11-03 11:29:39.401954	2025-11-03 11:29:39.401954	\N	\N
+3508e577-ccf8-4d95-b269-effab468a5e0	gentoo.png	gentoo.png	image/png	863	user_0175f133-1e13-41fc-9b39-ab3921c962af/8787fa92-2bd8-4cde-aedd-3ffcd9ce8df5/v1_gentoo.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	8787fa92-2bd8-4cde-aedd-3ffcd9ce8df5.jpg	t	1	\N	2025-11-03 11:29:39.414449	2025-11-03 11:29:39.414449	\N	\N
+fb1c2239-465a-4f02-91fa-723fd260eace	korora.png	korora.png	image/png	1113	user_0175f133-1e13-41fc-9b39-ab3921c962af/36743cf5-83f9-43ca-97d5-95cb2722732f/v1_korora.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	36743cf5-83f9-43ca-97d5-95cb2722732f.jpg	t	1	\N	2025-11-03 11:29:39.427024	2025-11-03 11:29:39.427024	\N	\N
+05ea7b08-b471-486b-827c-a26cee446f59	kali.png	kali.png	image/png	1059	user_0175f133-1e13-41fc-9b39-ab3921c962af/773e8c03-9507-410a-970d-948d461824ea/v1_kali.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	773e8c03-9507-410a-970d-948d461824ea.jpg	t	1	\N	2025-11-03 11:29:39.439591	2025-11-03 11:29:39.439591	\N	\N
+ca03f7af-7eb1-4a8d-8d99-8756b8b5dfb1	pop-os.png	pop-os.png	image/png	1424	user_0175f133-1e13-41fc-9b39-ab3921c962af/72747a16-538b-4681-987f-676e129432b5/v1_pop-os.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	72747a16-538b-4681-987f-676e129432b5.jpg	t	1	\N	2025-11-03 11:29:39.452167	2025-11-03 11:29:39.452167	\N	\N
+06a1a11b-721e-4326-9e5c-0a6e984a2eba	opensuse.png	opensuse.png	image/png	1327	user_0175f133-1e13-41fc-9b39-ab3921c962af/fe5461f7-3e3e-4989-bbb0-3e0c5d1f65c3/v1_opensuse.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	fe5461f7-3e3e-4989-bbb0-3e0c5d1f65c3.jpg	t	1	\N	2025-11-03 11:29:39.464427	2025-11-03 11:29:39.464427	\N	\N
+49ccd290-6ff1-4043-8931-6617a14ceaf7	deepin.png	deepin.png	image/png	1208	user_0175f133-1e13-41fc-9b39-ab3921c962af/eb025863-4788-46a0-bc9c-fa18352d0491/v1_deepin.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	eb025863-4788-46a0-bc9c-fa18352d0491.jpg	t	1	\N	2025-11-03 11:29:39.47696	2025-11-03 11:29:39.47696	\N	\N
+1fb40ff7-8fbd-4fa8-ac79-b26cde496fd1	recovery.png	recovery.png	image/png	707	user_0175f133-1e13-41fc-9b39-ab3921c962af/ce5067fb-5dcc-421d-bb74-2f5dfb08cf94/v1_recovery.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	ce5067fb-5dcc-421d-bb74-2f5dfb08cf94.jpg	t	1	\N	2025-11-03 11:29:39.488965	2025-11-03 11:29:39.488965	\N	\N
+cedef217-c708-4862-8e8e-739f9686bbd9	restart.png	restart.png	image/png	709	user_0175f133-1e13-41fc-9b39-ab3921c962af/d83bc76a-7881-4676-b5f6-bc672175c5e3/v1_restart.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	d83bc76a-7881-4676-b5f6-bc672175c5e3.jpg	t	1	\N	2025-11-03 11:29:39.501124	2025-11-03 11:29:39.501124	\N	\N
+26b21ad1-ea48-4706-9634-7e3a3e0b30bb	lfs.png	lfs.png	image/png	1397	user_0175f133-1e13-41fc-9b39-ab3921c962af/757b502d-12e7-4f15-aefc-6784c475819e/v1_lfs.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	757b502d-12e7-4f15-aefc-6784c475819e.jpg	t	1	\N	2025-11-03 11:29:39.513286	2025-11-03 11:29:39.513286	\N	\N
+b0d3524e-93f0-4bfb-bdef-557b8fe4fdf9	ubuntu.png	ubuntu.png	image/png	1261	user_0175f133-1e13-41fc-9b39-ab3921c962af/febc1478-d2e9-4e9a-8cf3-1909ab706bc7/v1_ubuntu.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	febc1478-d2e9-4e9a-8cf3-1909ab706bc7.jpg	t	1	\N	2025-11-03 11:29:39.52543	2025-11-03 11:29:39.52543	\N	\N
+e66ed53d-1eaa-489d-aa0a-439b6bba5eea	elementary.png	elementary.png	image/png	1577	user_0175f133-1e13-41fc-9b39-ab3921c962af/22c9e8f4-3462-480a-9a66-034692bae8a7/v1_elementary.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	22c9e8f4-3462-480a-9a66-034692bae8a7.jpg	t	1	\N	2025-11-03 11:29:39.537533	2025-11-03 11:29:39.537533	\N	\N
+2867ad3a-548c-422e-a1f6-b83958494c08	gnu-linux.png	gnu-linux.png	image/png	1397	user_0175f133-1e13-41fc-9b39-ab3921c962af/9fc3af51-0d83-4723-ac37-90d97600fe2c/v1_gnu-linux.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	9fc3af51-0d83-4723-ac37-90d97600fe2c.jpg	t	1	\N	2025-11-03 11:29:39.550218	2025-11-03 11:29:39.550218	\N	\N
+056f499d-47a5-48b9-9cfa-d30a097968ad	cancel.png	cancel.png	image/png	541	user_0175f133-1e13-41fc-9b39-ab3921c962af/82e6c693-43fa-4242-9ee5-3cbe953db3d7/v1_cancel.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	82e6c693-43fa-4242-9ee5-3cbe953db3d7.jpg	t	1	\N	2025-11-03 11:29:39.562596	2025-11-03 11:29:39.562596	\N	\N
+74bf577b-f447-4b48-9b07-176e1263eb7e	linuxmint.png	linuxmint.png	image/png	1003	user_0175f133-1e13-41fc-9b39-ab3921c962af/3a7d79f1-0950-4256-b7fb-01f3063bfe3e/v1_linuxmint.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	3a7d79f1-0950-4256-b7fb-01f3063bfe3e.jpg	t	1	\N	2025-11-03 11:29:39.575894	2025-11-03 11:29:39.575894	\N	\N
+4f503ebb-dd9d-499d-b567-351f6e6161bc	lang.png	lang.png	image/png	1202	user_0175f133-1e13-41fc-9b39-ab3921c962af/58b13820-4191-4e0e-b5a5-86f4b7dee641/v1_lang.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	58b13820-4191-4e0e-b5a5-86f4b7dee641.jpg	t	1	\N	2025-11-03 11:29:39.589004	2025-11-03 11:29:39.589004	\N	\N
+1ea19964-82d5-474e-a115-b9211d2db070	type.png	type.png	image/png	385	user_0175f133-1e13-41fc-9b39-ab3921c962af/49fc9d09-b368-4454-b68a-07de65b8b28c/v1_type.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	49fc9d09-b368-4454-b68a-07de65b8b28c.jpg	t	1	\N	2025-11-03 11:29:39.601478	2025-11-03 11:29:39.601478	\N	\N
+6a4fe692-3d9c-4b9f-8adf-5457940c9d70	efi.png	efi.png	image/png	665	user_0175f133-1e13-41fc-9b39-ab3921c962af/d33d6617-7d57-45a1-89c7-64a3ef6d9c8d/v1_efi.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	d33d6617-7d57-45a1-89c7-64a3ef6d9c8d.jpg	t	1	\N	2025-11-03 11:29:39.613789	2025-11-03 11:29:39.613789	\N	\N
+1973cd18-0fa9-4592-a93a-d0d98060b98f	Manjaro.i686.png	Manjaro.i686.png	image/png	388	user_0175f133-1e13-41fc-9b39-ab3921c962af/a4a72e66-ad22-4ddd-ac5f-6374d3f3d80e/v1_Manjaro.i686.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	a4a72e66-ad22-4ddd-ac5f-6374d3f3d80e.jpg	t	1	\N	2025-11-03 11:29:39.62633	2025-11-03 11:29:39.62633	\N	\N
+0300dbcf-a84b-4962-ae29-6cc1cfe3a86b	solus.png	solus.png	image/png	1199	user_0175f133-1e13-41fc-9b39-ab3921c962af/bd63fd2f-c843-468a-a74b-9591603c70fb/v1_solus.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	bd63fd2f-c843-468a-a74b-9591603c70fb.jpg	t	1	\N	2025-11-03 11:29:39.638807	2025-11-03 11:29:39.638807	\N	\N
+0f633a6f-1976-4f55-b53a-2a1975f46b82	kaos.png	kaos.png	image/png	995	user_0175f133-1e13-41fc-9b39-ab3921c962af/03b3342d-3abf-44d9-b706-c8ee88410d80/v1_kaos.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	03b3342d-3abf-44d9-b706-c8ee88410d80.jpg	t	1	\N	2025-11-03 11:29:39.652109	2025-11-03 11:29:39.652109	\N	\N
+00765a9c-b721-415a-b110-af287ba64b7e	Manjaro.x86_64.png	Manjaro.x86_64.png	image/png	388	user_0175f133-1e13-41fc-9b39-ab3921c962af/ea30f0a4-ca3b-4ec5-90d6-6dfa0ac0263a/v1_Manjaro.x86_64.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	ea30f0a4-ca3b-4ec5-90d6-6dfa0ac0263a.jpg	t	1	\N	2025-11-03 11:29:39.664858	2025-11-03 11:29:39.664858	\N	\N
+1f32a6ee-5916-4e72-ae66-4fc0d33bf392	driver.png	driver.png	image/png	793	user_0175f133-1e13-41fc-9b39-ab3921c962af/6c2465d4-9e60-4280-9ef9-59e0ce60c312/v1_driver.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	6c2465d4-9e60-4280-9ef9-59e0ce60c312.jpg	t	1	\N	2025-11-03 11:29:39.677632	2025-11-03 11:29:39.677632	\N	\N
+847f1d1d-341d-4289-a43b-0332f7bdaa0a	siduction.png	siduction.png	image/png	1147	user_0175f133-1e13-41fc-9b39-ab3921c962af/bf16fd52-f604-4cad-9310-f1bbc468e3ae/v1_siduction.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	bf16fd52-f604-4cad-9310-f1bbc468e3ae.jpg	t	1	\N	2025-11-03 11:29:39.690568	2025-11-03 11:29:39.690568	\N	\N
+0a6fe912-c4b8-409b-828a-b6309afc551b	fedora.png	fedora.png	image/png	1057	user_0175f133-1e13-41fc-9b39-ab3921c962af/10fecf9c-35d2-488f-ac3b-054a6d59a67b/v1_fedora.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	10fecf9c-35d2-488f-ac3b-054a6d59a67b.jpg	t	1	\N	2025-11-03 11:29:39.703282	2025-11-03 11:29:39.703282	\N	\N
+111b9b8c-474a-4d3c-a593-0350366a850a	macosx.png	macosx.png	image/png	880	user_0175f133-1e13-41fc-9b39-ab3921c962af/5e6a68ec-f24c-4dcc-84e5-9e71b4fb7287/v1_macosx.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	5e6a68ec-f24c-4dcc-84e5-9e71b4fb7287.jpg	t	1	\N	2025-11-03 11:29:39.715727	2025-11-03 11:29:39.715727	\N	\N
+f3a03194-c48f-4206-ab1e-16b77bf3e61c	xubuntu.png	xubuntu.png	image/png	1048	user_0175f133-1e13-41fc-9b39-ab3921c962af/b524fa56-ddf1-4d8d-a120-b599deddabd5/v1_xubuntu.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	b524fa56-ddf1-4d8d-a120-b599deddabd5.jpg	t	1	\N	2025-11-03 11:29:39.728742	2025-11-03 11:29:39.728742	\N	\N
+b1b2a192-290b-4ad4-99f0-0cccf13578e4	terminus-16.pf2	terminus-16.pf2	application/octet-stream	24214	user_0175f133-1e13-41fc-9b39-ab3921c962af/2f1fcec2-7c69-4389-b824-0ad376d667d8/v1_terminus-16.pf2	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	\N	f	1	\N	2025-11-03 11:29:39.741365	2025-11-03 11:29:39.741365	\N	\N
+6e934b16-d0eb-4649-a25d-5a11035df766	terminal_box_se.png	terminal_box_se.png	image/png	1102	user_0175f133-1e13-41fc-9b39-ab3921c962af/9cba1283-91b4-45ea-97eb-94e950b7518b/v1_terminal_box_se.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	9cba1283-91b4-45ea-97eb-94e950b7518b.jpg	t	1	\N	2025-11-03 11:29:39.753189	2025-11-03 11:29:39.753189	\N	\N
+b855eb2c-5d0f-4bda-ba4d-1a9380d05638	theme.txt	theme.txt	text/plain	903	user_0175f133-1e13-41fc-9b39-ab3921c962af/a4b8c6c2-b6fa-4b9d-98fd-407714bd5e28/v1_theme.txt	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	\N	f	1	\N	2025-11-03 11:29:39.766103	2025-11-03 11:29:39.766103	\N	\N
+635e9b21-fecf-4b4a-9c03-2c0f3c9fd4c8	terminal_box_e.png	terminal_box_e.png	image/png	952	user_0175f133-1e13-41fc-9b39-ab3921c962af/7996fd3f-78b4-4065-8b34-9af485d85984/v1_terminal_box_e.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	7996fd3f-78b4-4065-8b34-9af485d85984.jpg	t	1	\N	2025-11-03 11:29:39.777831	2025-11-03 11:29:39.777831	\N	\N
+2038baab-863a-4d89-9a33-034f146672e1	select_e.png	select_e.png	image/png	289	user_0175f133-1e13-41fc-9b39-ab3921c962af/b145c38a-ba6d-4e4f-8df3-c2a50641c4d9/v1_select_e.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	b145c38a-ba6d-4e4f-8df3-c2a50641c4d9.jpg	t	1	\N	2025-11-03 11:29:39.789879	2025-11-03 11:29:39.789879	\N	\N
+03a116dc-7b0d-4f55-963e-4fde290ca06b	terminal_box_sw.png	terminal_box_sw.png	image/png	1107	user_0175f133-1e13-41fc-9b39-ab3921c962af/1a51c9f6-cece-452e-a1a9-816c7ecbce1b/v1_terminal_box_sw.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	1a51c9f6-cece-452e-a1a9-816c7ecbce1b.jpg	t	1	\N	2025-11-03 11:29:39.802028	2025-11-03 11:29:39.802028	\N	\N
+0cad7453-bd5b-4056-a9f6-5974cac91977	terminal_box_n.png	terminal_box_n.png	image/png	963	user_0175f133-1e13-41fc-9b39-ab3921c962af/bad70a79-d880-4041-9140-7d7c3af456dc/v1_terminal_box_n.png	0175f133-1e13-41fc-9b39-ab3921c962af	592a4db1-cdc8-4740-9de4-fab0e915e4c0	active	f	bad70a79-d880-4041-9140-7d7c3af456dc.jpg	t	1	\N	2025-11-03 11:29:39.814281	2025-11-03 11:29:39.814281	\N	\N
+22db6071-a74c-4e6c-b175-62da597765cb	Zaroor.mp3	Zaroor.mp3	audio/mpeg	5630975	user_0175f133-1e13-41fc-9b39-ab3921c962af/c251e7db-703e-4e69-ad44-10f6bea814f6/v1_Zaroor.mp3	0175f133-1e13-41fc-9b39-ab3921c962af	c22a939f-80ec-489a-9606-9797fb9657f8	active	f	\N	f	1	\N	2025-11-03 11:30:00.786945	2025-11-03 11:30:00.786945	\N	\N
+ca1b9706-fbf9-485a-89f6-24cdbd1c1678	Ek Din Aap.mp3	Ek Din Aap.mp3	audio/mpeg	8221954	user_0175f133-1e13-41fc-9b39-ab3921c962af/be3996e7-c390-43e3-9213-f3f6141d0193/v1_Ek Din Aap.mp3	0175f133-1e13-41fc-9b39-ab3921c962af	c22a939f-80ec-489a-9606-9797fb9657f8	active	f	\N	f	1	\N	2025-11-03 11:30:02.79011	2025-11-03 11:30:02.79011	\N	\N
+257433d7-d0f1-4963-903f-1f7e670f3d67	Isq Risk.mp3	Isq Risk.mp3	audio/mpeg	8440143	user_0175f133-1e13-41fc-9b39-ab3921c962af/3b67c5db-c04e-4b95-9a35-067193ef6318/v1_Isq Risk.mp3	0175f133-1e13-41fc-9b39-ab3921c962af	c22a939f-80ec-489a-9606-9797fb9657f8	active	f	\N	f	1	\N	2025-11-03 11:30:04.178344	2025-11-03 11:30:04.178344	\N	\N
+901c7cdd-543a-4aa0-93df-38cc7273ca58	YE TUNE KYA KIYA.mp3	YE TUNE KYA KIYA.mp3	audio/mpeg	10417106	user_0175f133-1e13-41fc-9b39-ab3921c962af/c218ba61-0e29-4a17-b470-3dd4a379f9c9/v1_YE TUNE KYA KIYA.mp3	0175f133-1e13-41fc-9b39-ab3921c962af	c22a939f-80ec-489a-9606-9797fb9657f8	active	f	\N	f	1	\N	2025-11-03 11:30:06.213015	2025-11-03 11:30:06.213015	\N	\N
+1f983c9f-41d9-48fe-874a-7be1713d3ec4	Risk.mp3	Risk.mp3	audio/mpeg	6149209	user_0175f133-1e13-41fc-9b39-ab3921c962af/032f0844-6ebf-43f8-b054-614a2605df61/v1_Risk.mp3	0175f133-1e13-41fc-9b39-ab3921c962af	c22a939f-80ec-489a-9606-9797fb9657f8	active	f	\N	f	1	\N	2025-11-03 11:30:07.731245	2025-11-03 11:30:07.731245	\N	\N
+fa07807a-2ace-4861-9c02-3133c42666b4	Sahiba.mp3	Sahiba.mp3	audio/mpeg	7099731	user_0175f133-1e13-41fc-9b39-ab3921c962af/0287d9f0-f0cb-4300-898d-b3f1fb73c3f5/v1_Sahiba.mp3	0175f133-1e13-41fc-9b39-ab3921c962af	c22a939f-80ec-489a-9606-9797fb9657f8	active	f	\N	f	1	\N	2025-11-03 11:30:09.78038	2025-11-03 11:30:09.78038	\N	\N
+7e9ead1c-004d-400b-91f1-32cf830ea2b7	Moral of the Story.mp3	Moral of the Story.mp3	audio/mpeg	6320592	user_0175f133-1e13-41fc-9b39-ab3921c962af/001429ae-6e4e-4b17-9f02-5faaffed5170/v1_Moral of the Story.mp3	0175f133-1e13-41fc-9b39-ab3921c962af	c22a939f-80ec-489a-9606-9797fb9657f8	active	f	\N	f	1	\N	2025-11-03 11:30:19.013403	2025-11-03 11:30:19.013403	\N	\N
+\.
+
+
+--
+-- Data for Name: folders; Type: TABLE DATA; Schema: public; Owner: user
+--
+
+COPY public.folders (id, name, owner_id, parent_folder_id, is_root, status, is_starred, created_at, updated_at, trashed_at) FROM stdin;
+d981dc00-08b4-45fa-867d-74baf073ca4f	My Drive	a0a27917-ee02-4bf8-9636-ca7573961b51	\N	t	active	f	2025-11-03 11:21:22.456746	2025-11-03 11:21:22.456746	\N
+a9f80a2c-f943-423a-9042-ad4d2ed83e9c	My Drive	49f86892-2738-4537-aeae-da1d59f75e79	\N	t	active	f	2025-11-03 11:23:41.193481	2025-11-03 11:23:41.193481	\N
+536a2834-756a-4450-9e85-15f46d9c9634	My Drive	0175f133-1e13-41fc-9b39-ab3921c962af	\N	t	active	f	2025-11-03 11:27:09.380542	2025-11-03 11:27:09.380542	\N
+3e4c7863-3767-4510-8e69-15394f064d19	Photos	0175f133-1e13-41fc-9b39-ab3921c962af	\N	f	active	f	2025-11-03 11:28:25.732798	2025-11-03 11:28:25.732798	\N
+c22a939f-80ec-489a-9606-9797fb9657f8	Music	0175f133-1e13-41fc-9b39-ab3921c962af	\N	f	active	f	2025-11-03 11:28:35.147582	2025-11-03 11:28:35.147582	\N
+fd9da574-b29e-446e-b942-15f82e0abc62	Backup	0175f133-1e13-41fc-9b39-ab3921c962af	\N	f	active	f	2025-11-03 11:28:42.80804	2025-11-03 11:28:42.80804	\N
+592a4db1-cdc8-4740-9de4-fab0e915e4c0	Docs	0175f133-1e13-41fc-9b39-ab3921c962af	\N	f	active	f	2025-11-03 11:28:53.646044	2025-11-03 11:28:53.646044	\N
+\.
+
+
+--
+-- Data for Name: goose_db_version; Type: TABLE DATA; Schema: public; Owner: user
+--
+
+COPY public.goose_db_version (id, version_id, is_applied, tstamp) FROM stdin;
+1	0	t	2025-11-03 10:22:52.629423
+2	1	t	2025-11-03 10:22:52.647808
+3	2	t	2025-11-03 10:22:52.661139
+4	3	t	2025-11-03 10:22:52.681825
+5	4	t	2025-11-03 10:22:52.696307
+6	5	t	2025-11-03 10:22:52.717186
+7	6	t	2025-11-03 10:22:52.729948
+8	7	t	2025-11-03 10:22:52.746123
+9	8	t	2025-11-03 10:22:52.758981
+10	9	t	2025-11-03 10:22:52.772551
+11	10	t	2025-11-03 10:22:52.804084
+12	11	t	2025-11-03 10:22:52.819587
+\.
+
+
+--
+-- Data for Name: permissions; Type: TABLE DATA; Schema: public; Owner: user
+--
+
+COPY public.permissions (id, item_type, item_id, user_id, role, granted_by, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: sessions; Type: TABLE DATA; Schema: public; Owner: user
+--
+
+COPY public.sessions (id, user_id, token, expires_at, created_at) FROM stdin;
+1e3552f0-92d1-4ba6-9045-4810706d665c	a0a27917-ee02-4bf8-9636-ca7573961b51	2d424f4d7b908c51dc2e4f908adf2e27f693d68cf05cc849e671c25ccd1a0893	2025-12-03 11:21:22.459344	2025-11-03 11:21:22.459507
+78b071cf-6528-41ec-9a3e-e9cc56a67d82	49f86892-2738-4537-aeae-da1d59f75e79	96a74c56392ab2d49c36c7c33108ec828ee1e6a6a159a32dbd29df1be902d0a1	2025-12-03 11:23:41.19582	2025-11-03 11:23:41.195845
+05657d06-6dc2-4fe1-b874-a1d95ae23991	0175f133-1e13-41fc-9b39-ab3921c962af	ab3618d4332408a61f1cbf5f36dc0a5130117112d2c47870a139190ec46fcf5f	2025-12-03 11:27:09.382931	2025-11-03 11:27:09.383087
+\.
+
+
+--
+-- Data for Name: shares; Type: TABLE DATA; Schema: public; Owner: user
+--
+
+COPY public.shares (id, item_type, item_id, token, created_by, permission, expires_at, is_active, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: user
+--
+
+COPY public.users (id, email, hashed_password, name, storage_used, storage_limit, created_at, updated_at) FROM stdin;
+a0a27917-ee02-4bf8-9636-ca7573961b51	testuser@example.com	$2a$10$A7TV0yCL6Pd53QOPsgfwXe4s2i5gtbESupQA5dDUWxcqlMTY6YFYq	Test User	0	16106127360	2025-11-03 11:21:22.452718	2025-11-03 11:21:22.452718
+49f86892-2738-4537-aeae-da1d59f75e79	testuser2@example.com	$2a$10$x6/Ol4R65kUz6Bg/pLDJ7eBxymTQJsZ7N4v.5W4skVykqIHEHnUSW	Test User 2	0	16106127360	2025-11-03 11:23:41.189983	2025-11-03 11:23:41.189983
+0175f133-1e13-41fc-9b39-ab3921c962af	tst@g	$2a$10$LjCsWQskWh0qJB8ZcF71PuT0rk5RDqypDCdXjtsdO3bVzmDIFc3h6	docker	61875713	16106127360	2025-11-03 11:27:09.374153	2025-11-03 11:30:19.018247
+\.
+
+
+--
+-- Name: goose_db_version_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
+--
+
+SELECT pg_catalog.setval('public.goose_db_version_id_seq', 12, true);
+
+
+--
+-- Name: activity_log activity_log_pkey; Type: CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.activity_log
+    ADD CONSTRAINT activity_log_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: comments comments_pkey; Type: CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.comments
+    ADD CONSTRAINT comments_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: file_versions file_versions_file_id_version_number_key; Type: CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.file_versions
+    ADD CONSTRAINT file_versions_file_id_version_number_key UNIQUE (file_id, version_number);
+
+
+--
+-- Name: file_versions file_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.file_versions
+    ADD CONSTRAINT file_versions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: files files_pkey; Type: CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.files
+    ADD CONSTRAINT files_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: folders folders_pkey; Type: CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.folders
+    ADD CONSTRAINT folders_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: goose_db_version goose_db_version_pkey; Type: CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.goose_db_version
+    ADD CONSTRAINT goose_db_version_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: permissions permissions_item_type_item_id_user_id_key; Type: CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.permissions
+    ADD CONSTRAINT permissions_item_type_item_id_user_id_key UNIQUE (item_type, item_id, user_id);
+
+
+--
+-- Name: permissions permissions_pkey; Type: CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.permissions
+    ADD CONSTRAINT permissions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sessions sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.sessions
+    ADD CONSTRAINT sessions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sessions sessions_token_key; Type: CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.sessions
+    ADD CONSTRAINT sessions_token_key UNIQUE (token);
+
+
+--
+-- Name: shares shares_pkey; Type: CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.shares
+    ADD CONSTRAINT shares_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: shares shares_token_key; Type: CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.shares
+    ADD CONSTRAINT shares_token_key UNIQUE (token);
+
+
+--
+-- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_email_key UNIQUE (email);
+
+
+--
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: idx_activity_file; Type: INDEX; Schema: public; Owner: user
+--
+
+CREATE INDEX idx_activity_file ON public.activity_log USING btree (file_id);
+
+
+--
+-- Name: idx_activity_user; Type: INDEX; Schema: public; Owner: user
+--
+
+CREATE INDEX idx_activity_user ON public.activity_log USING btree (user_id, created_at DESC);
+
+
+--
+-- Name: idx_comments_created_at; Type: INDEX; Schema: public; Owner: user
+--
+
+CREATE INDEX idx_comments_created_at ON public.comments USING btree (created_at DESC);
+
+
+--
+-- Name: idx_comments_file_id; Type: INDEX; Schema: public; Owner: user
+--
+
+CREATE INDEX idx_comments_file_id ON public.comments USING btree (file_id);
+
+
+--
+-- Name: idx_comments_user_id; Type: INDEX; Schema: public; Owner: user
+--
+
+CREATE INDEX idx_comments_user_id ON public.comments USING btree (user_id);
+
+
+--
+-- Name: idx_file_versions_file; Type: INDEX; Schema: public; Owner: user
+--
+
+CREATE INDEX idx_file_versions_file ON public.file_versions USING btree (file_id);
+
+
+--
+-- Name: idx_files_name_search; Type: INDEX; Schema: public; Owner: user
+--
+
+CREATE INDEX idx_files_name_search ON public.files USING gin (to_tsvector('english'::regconfig, (name)::text));
+
+
+--
+-- Name: idx_files_owner; Type: INDEX; Schema: public; Owner: user
+--
+
+CREATE INDEX idx_files_owner ON public.files USING btree (owner_id);
+
+
+--
+-- Name: idx_files_parent_folder; Type: INDEX; Schema: public; Owner: user
+--
+
+CREATE INDEX idx_files_parent_folder ON public.files USING btree (parent_folder_id);
+
+
+--
+-- Name: idx_files_starred; Type: INDEX; Schema: public; Owner: user
+--
+
+CREATE INDEX idx_files_starred ON public.files USING btree (is_starred) WHERE (is_starred = true);
+
+
+--
+-- Name: idx_files_status; Type: INDEX; Schema: public; Owner: user
+--
+
+CREATE INDEX idx_files_status ON public.files USING btree (status);
+
+
+--
+-- Name: idx_files_trashed_at; Type: INDEX; Schema: public; Owner: user
+--
+
+CREATE INDEX idx_files_trashed_at ON public.files USING btree (trashed_at) WHERE (status = 'trashed'::public.file_status);
+
+
+--
+-- Name: idx_folders_owner; Type: INDEX; Schema: public; Owner: user
+--
+
+CREATE INDEX idx_folders_owner ON public.folders USING btree (owner_id);
+
+
+--
+-- Name: idx_folders_parent; Type: INDEX; Schema: public; Owner: user
+--
+
+CREATE INDEX idx_folders_parent ON public.folders USING btree (parent_folder_id);
+
+
+--
+-- Name: idx_folders_trashed_at; Type: INDEX; Schema: public; Owner: user
+--
+
+CREATE INDEX idx_folders_trashed_at ON public.folders USING btree (trashed_at) WHERE (status = 'trashed'::public.file_status);
+
+
+--
+-- Name: idx_permissions_item; Type: INDEX; Schema: public; Owner: user
+--
+
+CREATE INDEX idx_permissions_item ON public.permissions USING btree (item_type, item_id);
+
+
+--
+-- Name: idx_permissions_user; Type: INDEX; Schema: public; Owner: user
+--
+
+CREATE INDEX idx_permissions_user ON public.permissions USING btree (user_id);
+
+
+--
+-- Name: idx_sessions_token; Type: INDEX; Schema: public; Owner: user
+--
+
+CREATE INDEX idx_sessions_token ON public.sessions USING btree (token);
+
+
+--
+-- Name: idx_sessions_user_id; Type: INDEX; Schema: public; Owner: user
+--
+
+CREATE INDEX idx_sessions_user_id ON public.sessions USING btree (user_id);
+
+
+--
+-- Name: idx_shares_item; Type: INDEX; Schema: public; Owner: user
+--
+
+CREATE INDEX idx_shares_item ON public.shares USING btree (item_type, item_id);
+
+
+--
+-- Name: idx_shares_token; Type: INDEX; Schema: public; Owner: user
+--
+
+CREATE INDEX idx_shares_token ON public.shares USING btree (token);
+
+
+--
+-- Name: idx_users_email; Type: INDEX; Schema: public; Owner: user
+--
+
+CREATE INDEX idx_users_email ON public.users USING btree (email);
+
+
+--
+-- Name: activity_log activity_log_file_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.activity_log
+    ADD CONSTRAINT activity_log_file_id_fkey FOREIGN KEY (file_id) REFERENCES public.files(id) ON DELETE CASCADE;
+
+
+--
+-- Name: activity_log activity_log_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.activity_log
+    ADD CONSTRAINT activity_log_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: comments comments_file_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.comments
+    ADD CONSTRAINT comments_file_id_fkey FOREIGN KEY (file_id) REFERENCES public.files(id) ON DELETE CASCADE;
+
+
+--
+-- Name: comments comments_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.comments
+    ADD CONSTRAINT comments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: file_versions file_versions_file_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.file_versions
+    ADD CONSTRAINT file_versions_file_id_fkey FOREIGN KEY (file_id) REFERENCES public.files(id) ON DELETE CASCADE;
+
+
+--
+-- Name: file_versions file_versions_uploaded_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.file_versions
+    ADD CONSTRAINT file_versions_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES public.users(id);
+
+
+--
+-- Name: files files_owner_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.files
+    ADD CONSTRAINT files_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: files files_parent_folder_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.files
+    ADD CONSTRAINT files_parent_folder_id_fkey FOREIGN KEY (parent_folder_id) REFERENCES public.folders(id) ON DELETE SET NULL;
+
+
+--
+-- Name: folders folders_owner_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.folders
+    ADD CONSTRAINT folders_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: folders folders_parent_folder_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.folders
+    ADD CONSTRAINT folders_parent_folder_id_fkey FOREIGN KEY (parent_folder_id) REFERENCES public.folders(id) ON DELETE CASCADE;
+
+
+--
+-- Name: permissions permissions_granted_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.permissions
+    ADD CONSTRAINT permissions_granted_by_fkey FOREIGN KEY (granted_by) REFERENCES public.users(id);
+
+
+--
+-- Name: permissions permissions_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.permissions
+    ADD CONSTRAINT permissions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: sessions sessions_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.sessions
+    ADD CONSTRAINT sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: shares shares_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.shares
+    ADD CONSTRAINT shares_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id);
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+\unrestrict qzS68x689RgElntjoIZtNGep9vIZObobJAgM14h27Q7tags3YjL1WfFqQKIYxJD
+

@@ -1,0 +1,107 @@
+.activity-widget {
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.widget-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-weight: 500;
+  font-size: 14px;
+  color: #202124;
+}
+
+.widget-content {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.widget-loading {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+.spinner-small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #f1f3f4;
+  border-top-color: #1a73e8;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.widget-empty {
+  padding: 20px;
+  text-align: center;
+  color: #5f6368;
+  font-size: 13px;
+}
+
+.widget-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.widget-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.widget-item:hover {
+  background: #f8f9fa;
+}
+
+.widget-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #f1f3f4;
+  color: #5f6368;
+  flex-shrink: 0;
+}
+
+.widget-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.widget-activity-text {
+  font-size: 13px;
+  color: #202124;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.widget-time {
+  font-size: 11px;
+  color: #5f6368;
+  margin-top: 2px;
+}
+
+.widget-arrow {
+  color: #9aa0a6;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+

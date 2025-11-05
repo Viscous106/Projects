@@ -1,0 +1,66 @@
+.drive-context-menu {
+  position: fixed;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2), 0 0 1px rgba(0, 0, 0, 0.1);
+  min-width: 200px;
+  z-index: 1000;
+  padding: 8px 0;
+  font-size: 14px;
+}
+
+.drive-submenu {
+  position: fixed;
+  margin-left: 4px;
+  z-index: 1001;
+}
+
+.drive-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.1s;
+}
+
+.drive-menu-item:hover {
+  background-color: #f1f3f4;
+}
+
+.drive-menu-item-content {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 12px;
+}
+
+.drive-menu-icon {
+  display: flex;
+  align-items: center;
+  color: #5f6368;
+  flex-shrink: 0;
+}
+
+.drive-menu-label {
+  color: #202124;
+  flex: 1;
+}
+
+.drive-menu-chevron {
+  color: #5f6368;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.drive-menu-divider {
+  height: 1px;
+  background-color: #dadce0;
+  margin: 4px 0;
+}
+
+.drive-menu-item:active {
+  background-color: #e8eaed;
+}
+
