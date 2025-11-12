@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Tic Tac Toe</title>
+		<link rel="stylesheet" href="style.css">
+	</head>
+	<body>
+		<main class="game" role="application" aria-label="Tic Tac Toe">
+			<header class="header">
+				<div>
+					<div class="title">Tic Tac Toe</div>
+					<div class="status" id="status">Player <strong id="current">X</strong>'s turn</div>
+				</div>
+				<div class="scoreboard" aria-live="polite">
+					<div>X: <span id="score-x">0</span></div>
+					<div>O: <span id="score-o">0</span></div>
+					<div>Ties: <span id="score-t">0</span></div>
+				</div>
+			</header>
+
+			<section class="board" id="board" role="grid" aria-label="Game board">
+				<!-- 9 cells -->
+				<button class="cell" data-index="0" aria-label="cell 1" tabindex="0"></button>
+				<button class="cell" data-index="1" aria-label="cell 2" tabindex="0"></button>
+				<button class="cell" data-index="2" aria-label="cell 3" tabindex="0"></button>
+				<button class="cell" data-index="3" aria-label="cell 4" tabindex="0"></button>
+				<button class="cell" data-index="4" aria-label="cell 5" tabindex="0"></button>
+				<button class="cell" data-index="5" aria-label="cell 6" tabindex="0"></button>
+				<button class="cell" data-index="6" aria-label="cell 7" tabindex="0"></button>
+				<button class="cell" data-index="7" aria-label="cell 8" tabindex="0"></button>
+				<button class="cell" data-index="8" aria-label="cell 9" tabindex="0"></button>
+			</section>
+
+			<div class="controls">
+				<button class="btn primary" id="reset">New Game</button>
+				<button class="btn" id="undo" disabled>Undo</button>
+			</div>
+		</main>
+
+			<script src="script.js"></script>
+	</body>
+</html>
+
