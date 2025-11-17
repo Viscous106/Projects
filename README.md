@@ -11,6 +11,8 @@
 
    `ytDownloader`: A YouTube video downloader
 	How to use:download the down.py file inside https://github.com/Viscous106/Projects/tree/main/pythonProjects/ytDownloader and run the file as "Python location".
+   `intelligent storage`:Storage system that is fast really really fast.
+   How to access [https://github.com/Viscous106/intelligent_storage]
 
 ## **Web Development Projects:**
 
