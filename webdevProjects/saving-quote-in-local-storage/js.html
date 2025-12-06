@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Please NOTE that the link to assets (like images) need to be set in global context.
+For example:
+To access an image from assets folder correct way to set src attribute is 
+
+src = 'profile.png'
+
+instead of 
+
+src = './assets/profile.png'
+-->
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ticket Management App</title>
+
+    <link rel="stylesheet" href="temp.css">
+
+</head>
+   <body>
+
+    <!-- INPUT BOX ELEMENTS -->
+     <h1>Enter a Quote</h1>
+     <input class="input-box" id="name-input" placeholder="Author Name...">
+     <input class="input-box" id="quote-input" placeholder="Enter your quote here...">
+     <input class="input-box" id="category-input" placeholder="Enter quote category...">
+     <button class="save">Add Quote</button>
+
+
+
+  <!-- DISPLAY privious ELEMENTS -->
+   <div class="saved-tasks">
+       <ol class="display">
+      
+    
+       </ol>
+   </div>
+
+   <div class="quote-display-section">
+        <h2>All Quotes</h2>
+        <input class="input-box" id="search-input" placeholder="Search for a quote...">
+        <div class="all-quotes">
+        </div>
+   </div>
+   
+    <script src="temp.js"></script>
+
+</body>
+
+</html>

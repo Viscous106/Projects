@@ -1,0 +1,154 @@
+body{
+    background-image: linear-gradient(to right, #8360c3, #2ebf91);
+    display:flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+h1, h2{
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.input-box{
+       border: 2px, solid, black;
+    height: 20px;
+    width: 300px;
+    border-radius: 10px;
+       margin-bottom: 20px;
+    
+  
+    padding: 10px;
+    font-size: 16px;
+
+}
+.save{
+    background-color:blue;
+    color:white;
+    height: 40px;
+    width: 100px;
+    border-radius: 10px;
+    font-size: 16px;
+    transition: all 0.2s ease-in-out;
+}
+.save:hover {
+    background-color: #0000dd;
+    transform: scale(1.05);
+}
+.completed{
+ height: 40px;
+    width: 300px;
+    border-radius: 10px;
+    font-size: 16px;
+   background-color: rgb(161, 207, 87);
+    margin-top: 30px;
+    transition: all 0.2s ease-in-out;
+    
+}
+.completed:hover {
+    background-color: rgb(141, 187, 67);
+    transform: scale(1.05);
+}
+.display{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.item{
+    background-color: rgb(12, 10, 10);
+    color:white;
+    
+    width: 50rem;
+    border: 1px solid rgb(194, 191, 191); 
+    border-radius: 10px;
+    font-size: 16px;
+    padding: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.delete:hover {
+    background-color: #cc0000;
+    transform: scale(1.05);
+}
+
+.quote-display-section {
+    margin-top: 30px;
+    width: 80%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#quote-input {
+    height: 20px;
+}
+
+#search-input {
+    width: 50%;
+    margin-bottom: 20px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid #ddd;
+    color: white;
+}
+
+.delete-quote-btn {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.delete-quote-btn:hover {
+    background-color: #cc0000;
+}
+
+#search-input::placeholder {
+    color: #eee;
+}
+
+.all-quotes {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.quote-item {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 15px;
+    width: 80%;
+    position: relative;
+}
+
+.quote-author {
+    font-size: 0.9em;
+    font-style: italic;
+    color: #eee;
+    position: absolute;
+    top: 5px;
+    left: 15px;
+}
+
+.quote-text {
+    font-size: 1.2em;
+    margin-top: 20px;
+    text-align: center;
+}
+
+.quote-text::before {
+    content: '"';
+}
+
+.quote-text::after {
+    content: '"';
+}
