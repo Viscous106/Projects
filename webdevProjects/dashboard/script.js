@@ -204,11 +204,33 @@ function performLogin() {
     const username = usernameInput.value.trim();
     const password = passwordInput.value.trim();
 
+    // Enhanced validation
     if (username === '' || password === '') {
+        showToast('Please enter both username and password', 'warning');
         loginForm.style.animation = 'shake 0.5s ease';
         setTimeout(() => {
             loginForm.style.animation = '';
         }, 500);
+        return;
+    }
+
+    // Validate username length
+    if (username.length < 2) {
+        showToast('Username must be at least 2 characters', 'warning');
+        usernameInput.focus();
+        return;
+    }
+
+    if (username.length > 50) {
+        showToast('Username is too long (max 50 characters)', 'warning');
+        usernameInput.focus();
+        return;
+    }
+
+    // Validate password length
+    if (password.length < 1) {
+        showToast('Password cannot be empty', 'warning');
+        passwordInput.focus();
         return;
     }
 
@@ -219,6 +241,11 @@ function performLogin() {
 
     lucide.createIcons();
     taskInput.focus();
+
+    // Load saved data after login
+    loadTasksFromStorage();
+    loadNotesFromStorage();
+    loadTimerSessions();
 
     fetchWeather();
     fetchQuote();
@@ -362,10 +389,28 @@ const weatherCodes = {
 
 async function fetchWeather() {
     weatherDesc.textContent = 'Loading...';
+    weatherIcon.textContent = '⏳';
 
     try {
-        const geoResponse = await fetch('https://ipapi.co/json/');
+        // Add timeout for fetch requests
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+        const geoResponse = await fetch('https://ipapi.co/json/', {
+            signal: controller.signal
+        });
+
+        if (!geoResponse.ok) {
+            throw new Error(`Geolocation API error: ${geoResponse.status}`);
+        }
+
         const geoData = await geoResponse.json();
+        clearTimeout(timeoutId);
+
+        // Validate geolocation data
+        if (!geoData.latitude || !geoData.longitude) {
+            throw new Error('Invalid geolocation data');
+        }
 
         const lat = geoData.latitude;
         const lon = geoData.longitude;
@@ -373,8 +418,25 @@ async function fetchWeather() {
         const country = geoData.country_name || '';
 
         const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`;
-        const weatherResponse = await fetch(weatherUrl);
+        
+        const weatherController = new AbortController();
+        const weatherTimeoutId = setTimeout(() => weatherController.abort(), 10000);
+        
+        const weatherResponse = await fetch(weatherUrl, {
+            signal: weatherController.signal
+        });
+
+        if (!weatherResponse.ok) {
+            throw new Error(`Weather API error: ${weatherResponse.status}`);
+        }
+
         const weatherData = await weatherResponse.json();
+        clearTimeout(weatherTimeoutId);
+
+        // Validate weather data
+        if (!weatherData.current) {
+            throw new Error('Invalid weather data');
+        }
 
         const current = weatherData.current;
         const code = current.weather_code;
@@ -391,8 +453,17 @@ async function fetchWeather() {
         console.error('Weather fetch error:', error);
         weatherIcon.textContent = '🌡️';
         weatherTemp.textContent = '--°C';
-        weatherDesc.textContent = 'Unable to load';
-        weatherLocation.textContent = 'Check connection';
+        
+        if (error.name === 'AbortError') {
+            weatherDesc.textContent = 'Request timeout';
+            weatherLocation.textContent = 'Try again later';
+        } else if (error.message.includes('Failed to fetch')) {
+            weatherDesc.textContent = 'Network error';
+            weatherLocation.textContent = 'Check internet connection';
+        } else {
+            weatherDesc.textContent = 'Unable to load';
+            weatherLocation.textContent = 'Service unavailable';
+        }
     }
 }
 
@@ -410,17 +481,34 @@ async function fetchQuote() {
     quoteAuthor.textContent = '';
 
     try {
-        const response = await fetch('https://api.quotable.io/random?tags=technology|wisdom|inspirational');
+        // Add timeout for fetch request
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+        const response = await fetch('https://api.quotable.io/random?tags=technology|wisdom|inspirational', {
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
+        
+        // Validate quote data
+        if (!data.content || !data.author) {
+            throw new Error('Invalid quote data');
+        }
+
         quoteText.textContent = data.content;
         quoteAuthor.textContent = `— ${data.author}`;
 
     } catch (error) {
+        console.error('Quote fetch error:', error);
+        
+        // Fallback quotes
         const fallbackQuotes = [
             { content: "The best way to predict the future is to invent it.", author: "Alan Kay" },
             { content: "Talk is cheap. Show me the code.", author: "Linus Torvalds" },
@@ -447,6 +535,49 @@ refreshQuoteBtn.addEventListener('click', function () {
 // ============================================
 
 let currentFilter = 'all';
+
+// LocalStorage key for tasks
+const TASKS_STORAGE_KEY = 'productify_tasks';
+
+// Save tasks to LocalStorage
+function saveTasksToStorage() {
+    try {
+        const tasks = [];
+        const taskItems = taskList.querySelectorAll('.task-item');
+        taskItems.forEach(item => {
+            const text = item.querySelector('.task-text').textContent;
+            const isCompleted = item.classList.contains('completed');
+            tasks.push({ text, completed: isCompleted });
+        });
+        localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+    } catch (error) {
+        console.error('Error saving tasks to localStorage:', error);
+        showToast('Failed to save tasks', 'error');
+    }
+}
+
+// Load tasks from LocalStorage
+function loadTasksFromStorage() {
+    try {
+        const savedTasks = localStorage.getItem(TASKS_STORAGE_KEY);
+        if (savedTasks) {
+            const tasks = JSON.parse(savedTasks);
+            tasks.forEach(task => {
+                const taskElement = createTaskElement(task.text);
+                if (task.completed) {
+                    taskElement.classList.add('completed');
+                }
+                taskList.appendChild(taskElement);
+            });
+            updateEmptyState();
+            updateStats();
+            applyFilter();
+        }
+    } catch (error) {
+        console.error('Error loading tasks from localStorage:', error);
+        showToast('Failed to load saved tasks', 'error');
+    }
+}
 
 function createTaskElement(taskText) {
     // DOM BASICS: createElement
@@ -482,7 +613,26 @@ function createTaskElement(taskText) {
 function addTask() {
     const taskText = taskInput.value.trim();
 
+    // Enhanced input validation
     if (taskText === '') {
+        showToast('Please enter a task', 'warning');
+        taskInput.focus();
+        return;
+    }
+
+    // Check for duplicate tasks
+    const existingTasks = taskList.querySelectorAll('.task-item');
+    for (let task of existingTasks) {
+        if (task.querySelector('.task-text').textContent.toLowerCase() === taskText.toLowerCase()) {
+            showToast('This task already exists', 'warning');
+            taskInput.focus();
+            return;
+        }
+    }
+
+    // Limit task length
+    if (taskText.length > 200) {
+        showToast('Task is too long (max 200 characters)', 'error');
         taskInput.focus();
         return;
     }
@@ -495,6 +645,7 @@ function addTask() {
     updateEmptyState();
     updateStats();
     applyFilter();
+    saveTasksToStorage(); // Save to LocalStorage
 
     showToast('Task added');
 }
@@ -571,9 +722,12 @@ taskList.addEventListener('click', function (event) {
         taskItem.classList.toggle('completed');
         updateStats();
         applyFilter();
+        saveTasksToStorage(); // Save to LocalStorage
 
         if (taskItem.classList.contains('completed')) {
             showToast('Task completed! 🎉');
+        } else {
+            showToast('Task marked as pending');
         }
 
     } else if (action === 'delete') {
@@ -585,6 +739,7 @@ taskList.addEventListener('click', function (event) {
             taskItem.remove();
             updateEmptyState();
             updateStats();
+            saveTasksToStorage(); // Save to LocalStorage
             showToast('Task deleted');
         }, 300);
     }
@@ -611,26 +766,71 @@ taskInput.addEventListener('keydown', function (event) {
 // NOTES FUNCTIONALITY
 // ============================================
 
+// LocalStorage key for notes
+const NOTES_STORAGE_KEY = 'productify_notes';
+
+// Save notes to LocalStorage
+function saveNotesToStorage() {
+    try {
+        localStorage.setItem(NOTES_STORAGE_KEY, quickNotes.value);
+    } catch (error) {
+        console.error('Error saving notes to localStorage:', error);
+        showToast('Failed to save notes', 'error');
+    }
+}
+
+// Load notes from LocalStorage
+function loadNotesFromStorage() {
+    try {
+        const savedNotes = localStorage.getItem(NOTES_STORAGE_KEY);
+        if (savedNotes !== null) {
+            quickNotes.value = savedNotes;
+            const count = savedNotes.length;
+            charCount.textContent = `${count} character${count !== 1 ? 's' : ''}`;
+        }
+    } catch (error) {
+        console.error('Error loading notes from localStorage:', error);
+        showToast('Failed to load saved notes', 'error');
+    }
+}
+
 quickNotes.addEventListener('input', function () {
     const count = quickNotes.value.length;
     charCount.textContent = `${count} character${count !== 1 ? 's' : ''}`;
+    saveNotesToStorage(); // Auto-save on input
 });
 
 clearNotesBtn.addEventListener('click', function () {
     if (quickNotes.value.trim() !== '') {
-        quickNotes.value = '';
-        charCount.textContent = '0 characters';
-        showToast('Notes cleared');
+        if (confirm('Are you sure you want to clear all notes?')) {
+            quickNotes.value = '';
+            charCount.textContent = '0 characters';
+            saveNotesToStorage(); // Save to LocalStorage
+            showToast('Notes cleared');
+        }
+    } else {
+        showToast('Notes are already empty', 'warning');
     }
 });
 
 copyNotesBtn.addEventListener('click', function () {
     if (quickNotes.value.trim() !== '') {
-        navigator.clipboard.writeText(quickNotes.value).then(() => {
-            showToast('Copied to clipboard!');
-        }).catch(() => {
-            showToast('Failed to copy', 'error');
-        });
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(quickNotes.value).then(() => {
+                showToast('Copied to clipboard!');
+            }).catch(() => {
+                showToast('Failed to copy. Please try again.', 'error');
+            });
+        } else {
+            // Fallback for older browsers
+            quickNotes.select();
+            try {
+                document.execCommand('copy');
+                showToast('Copied to clipboard!');
+            } catch (err) {
+                showToast('Copy not supported in this browser', 'error');
+            }
+        }
     } else {
         showToast('Nothing to copy', 'warning');
     }
@@ -646,6 +846,31 @@ let timerRemaining = 25 * 60;
 let timerTotal = 25 * 60;
 let sessionCount = 0;
 let currentPreset = 25;
+
+// LocalStorage key for timer sessions
+const TIMER_STORAGE_KEY = 'productify_timer_sessions';
+
+// Load timer session count from LocalStorage
+function loadTimerSessions() {
+    try {
+        const savedCount = localStorage.getItem(TIMER_STORAGE_KEY);
+        if (savedCount !== null) {
+            sessionCount = parseInt(savedCount, 10) || 0;
+            sessionCountEl.textContent = sessionCount;
+        }
+    } catch (error) {
+        console.error('Error loading timer sessions from localStorage:', error);
+    }
+}
+
+// Save timer session count to LocalStorage
+function saveTimerSessions() {
+    try {
+        localStorage.setItem(TIMER_STORAGE_KEY, sessionCount.toString());
+    } catch (error) {
+        console.error('Error saving timer sessions to localStorage:', error);
+    }
+}
 
 const circumference = 2 * Math.PI * 90; // 565.48
 
@@ -685,6 +910,7 @@ function toggleTimer() {
 
                 sessionCount++;
                 sessionCountEl.textContent = sessionCount;
+                saveTimerSessions(); // Save to LocalStorage
 
                 showToast('🎉 Focus session complete! Time for a break.');
             }
@@ -730,6 +956,9 @@ updateTimerDisplay();
 // THEME SWITCHING
 // ============================================
 
+// LocalStorage key for theme
+const THEME_STORAGE_KEY = 'productify_theme';
+
 function setTheme(themeName) {
     document.documentElement.setAttribute('data-theme', themeName);
 
@@ -740,6 +969,25 @@ function setTheme(themeName) {
             option.classList.remove('active');
         }
     });
+
+    // Save theme preference to LocalStorage
+    try {
+        localStorage.setItem(THEME_STORAGE_KEY, themeName);
+    } catch (error) {
+        console.error('Error saving theme to localStorage:', error);
+    }
+}
+
+// Load theme from LocalStorage
+function loadTheme() {
+    try {
+        const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+        if (savedTheme) {
+            setTheme(savedTheme);
+        }
+    } catch (error) {
+        console.error('Error loading theme from localStorage:', error);
+    }
 }
 
 function openThemeModal() {
@@ -767,20 +1015,27 @@ themeOptions.forEach(function (option) {
     option.addEventListener('click', function () {
         const themeName = option.getAttribute('data-theme');
         setTheme(themeName);
-        showToast(`Theme: ${themeName.replace('-', ' ')}`);
+        showToast(`Theme: ${themeName.replace(/-/g, ' ')}`);
     });
 });
 
-setTheme('catppuccin-mocha');
+// Initialize theme (load from storage or use default)
+loadTheme();
+if (!localStorage.getItem(THEME_STORAGE_KEY)) {
+    setTheme('catppuccin-mocha');
+}
 
 // ============================================
 // INITIALIZATION
 // ============================================
 
+// Initialize on page load
 updateEmptyState();
 updateStats();
+loadTimerSessions(); // Load timer sessions even before login
 
 console.log('🚀 Productify Dashboard loaded!');
-console.log('📝 Syllabus topics: querySelector, createElement, appendChild, addEventListener, Event Delegation, Async/Await');
+console.log('📝 Syllabus topics: querySelector, createElement, appendChild, addEventListener, Event Delegation, Async/Await, LocalStorage');
 console.log('🎨 Libraries: Lucide Icons');
 console.log('🌐 APIs: Open-Meteo Weather, IP-API Geolocation, Quotable Quotes');
+console.log('💾 LocalStorage: Tasks, Notes, Theme, Timer Sessions');
