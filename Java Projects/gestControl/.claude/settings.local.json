@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gradle --version:*)",
+      "Bash(java --version:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

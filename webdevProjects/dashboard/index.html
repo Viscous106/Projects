@@ -12,13 +12,13 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
-    <!-- Lucide Icons - Modern icon library -->
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
 <body>
     <!-- ============================================
-         LOGIN PAGE - Dummy authentication
+         LOGIN PAGE
          ============================================ -->
     <div id="login-page" class="login-page">
         <div class="login-container">
@@ -37,13 +37,11 @@
                         <input type="text" id="username" name="username" placeholder="Enter your username"
                             autocomplete="username" required>
                     </div>
-
                     <div class="form-group">
                         <label for="password">Password</label>
                         <input type="password" id="password" name="password" placeholder="Enter your password"
                             autocomplete="current-password" required>
                     </div>
-
                     <div class="form-options">
                         <label class="checkbox-label">
                             <input type="checkbox" id="remember-me">
@@ -52,23 +50,16 @@
                         </label>
                         <a href="#" class="forgot-link">Forgot password?</a>
                     </div>
-
                     <button type="submit" id="login-btn" class="login-btn">
                         Sign In
                         <i data-lucide="arrow-right" class="btn-arrow"></i>
                     </button>
-
-                    <p class="login-hint">
-                        💡 Hint: Any username & password works!
-                    </p>
+                    <p class="login-hint">💡 Hint: Any username & password works!</p>
                 </form>
-
                 <div class="login-footer">
                     <p>Don't have an account? <a href="#">Sign up</a></p>
                 </div>
             </div>
-
-            <!-- Theme switcher on login page -->
             <div class="login-theme-toggle">
                 <button id="login-theme-btn" class="theme-toggle-btn" title="Change theme">
                     <i data-lucide="palette"></i>
@@ -144,7 +135,7 @@
             <header class="top-header">
                 <div class="header-left">
                     <button id="mobile-menu-btn" class="mobile-menu-btn"><i data-lucide="menu"></i></button>
-                    <h1 class="page-title">Dashboard</h1>
+                    <h1 id="page-title" class="page-title">Dashboard</h1>
                 </div>
                 <div class="header-right">
                     <div class="header-time">
@@ -156,177 +147,266 @@
                 </div>
             </header>
 
-            <!-- Dashboard Content -->
-            <div class="dashboard-content">
-                <!-- Welcome Section -->
-                <section class="welcome-section">
-                    <div class="welcome-card">
-                        <div class="welcome-text">
-                            <h2 id="greeting" class="greeting">Good Evening 👋</h2>
-                            <p class="welcome-subtitle">Here's what's happening today</p>
+            <!-- Page Views Container -->
+            <div class="page-views">
+                <!-- ========== DASHBOARD VIEW ========== -->
+                <div id="view-dashboard" class="page-view active">
+                    <section class="welcome-section">
+                        <div class="welcome-card">
+                            <div class="welcome-text">
+                                <h2 id="greeting" class="greeting">Good Evening 👋</h2>
+                                <p class="welcome-subtitle">Here's what's happening today</p>
+                            </div>
+                            <div class="time-display">
+                                <span id="main-clock" class="main-clock">00:00:00</span>
+                                <span id="main-date" class="main-date">Monday, January 26, 2026</span>
+                            </div>
                         </div>
-                        <div class="time-display">
-                            <span id="main-clock" class="main-clock">00:00:00</span>
-                            <span id="main-date" class="main-date">Monday, January 26, 2026</span>
-                        </div>
-                    </div>
-                </section>
+                    </section>
 
-                <!-- Widgets Grid -->
-                <div class="widgets-grid">
-                    <!-- Weather Widget - NEW -->
-                    <section class="widget weather-widget">
-                        <div class="widget-header">
-                            <h3 class="widget-title"><i data-lucide="cloud-sun"></i> Weather</h3>
-                            <button id="refresh-weather" class="icon-btn small" title="Refresh"><i
-                                    data-lucide="refresh-cw"></i></button>
-                        </div>
-                        <div class="widget-content">
-                            <div class="weather-display">
-                                <div class="weather-main">
-                                    <span id="weather-icon" class="weather-icon">☀️</span>
-                                    <span id="weather-temp" class="weather-temp">--°C</span>
-                                </div>
-                                <div class="weather-details">
-                                    <p id="weather-desc" class="weather-desc">Loading...</p>
-                                    <p id="weather-location" class="weather-location">--</p>
-                                    <div class="weather-extra">
-                                        <span><i data-lucide="droplets"></i> <span
-                                                id="weather-humidity">--%</span></span>
-                                        <span><i data-lucide="wind"></i> <span id="weather-wind">-- km/h</span></span>
+                    <div class="widgets-grid">
+                        <!-- Weather Widget -->
+                        <section class="widget weather-widget">
+                            <div class="widget-header">
+                                <h3 class="widget-title"><i data-lucide="cloud-sun"></i> Weather</h3>
+                                <button id="refresh-weather" class="icon-btn small" title="Refresh"><i
+                                        data-lucide="refresh-cw"></i></button>
+                            </div>
+                            <div class="widget-content">
+                                <div class="weather-display">
+                                    <div class="weather-main">
+                                        <span id="weather-icon" class="weather-icon">☀️</span>
+                                        <span id="weather-temp" class="weather-temp">--°C</span>
+                                    </div>
+                                    <div class="weather-details">
+                                        <p id="weather-desc" class="weather-desc">Loading...</p>
+                                        <p id="weather-location" class="weather-location">--</p>
+                                        <div class="weather-extra">
+                                            <span><i data-lucide="droplets"></i> <span
+                                                    id="weather-humidity">--%</span></span>
+                                            <span><i data-lucide="wind"></i> <span id="weather-wind">--
+                                                    km/h</span></span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </section>
+                        </section>
 
-                    <!-- Quote Widget -->
-                    <section class="widget quote-widget">
-                        <div class="widget-header">
-                            <h3 class="widget-title"><i data-lucide="lightbulb"></i> Daily Inspiration</h3>
-                            <button id="refresh-quote" class="icon-btn small" title="New quote"><i
-                                    data-lucide="refresh-cw"></i></button>
-                        </div>
-                        <div class="widget-content">
-                            <blockquote class="quote-block">
-                                <p id="quote-text" class="quote-text">Loading inspiration...</p>
-                                <footer id="quote-author" class="quote-author">— Anonymous</footer>
-                            </blockquote>
-                        </div>
-                    </section>
+                        <!-- Quote Widget -->
+                        <section class="widget quote-widget">
+                            <div class="widget-header">
+                                <h3 class="widget-title"><i data-lucide="lightbulb"></i> Daily Inspiration</h3>
+                                <button id="refresh-quote" class="icon-btn small" title="New quote"><i
+                                        data-lucide="refresh-cw"></i></button>
+                            </div>
+                            <div class="widget-content">
+                                <blockquote class="quote-block">
+                                    <p id="quote-text" class="quote-text">Loading inspiration...</p>
+                                    <footer id="quote-author" class="quote-author">— Anonymous</footer>
+                                </blockquote>
+                            </div>
+                        </section>
 
-                    <!-- Stats Widget -->
-                    <section class="widget stats-widget">
-                        <div class="widget-header">
-                            <h3 class="widget-title"><i data-lucide="bar-chart-3"></i> Today's Progress</h3>
-                        </div>
-                        <div class="widget-content">
-                            <div class="stats-grid">
-                                <div class="stat-card">
-                                    <span class="stat-value" id="total-tasks">0</span>
-                                    <span class="stat-label">Total Tasks</span>
+                        <!-- Stats Widget -->
+                        <section class="widget stats-widget">
+                            <div class="widget-header">
+                                <h3 class="widget-title"><i data-lucide="bar-chart-3"></i> Today's Progress</h3>
+                            </div>
+                            <div class="widget-content">
+                                <div class="stats-grid">
+                                    <div class="stat-card">
+                                        <span class="stat-value" id="dash-total-tasks">0</span>
+                                        <span class="stat-label">Total Tasks</span>
+                                    </div>
+                                    <div class="stat-card completed">
+                                        <span class="stat-value" id="dash-completed-tasks">0</span>
+                                        <span class="stat-label">Completed</span>
+                                    </div>
+                                    <div class="stat-card pending">
+                                        <span class="stat-value" id="dash-pending-tasks">0</span>
+                                        <span class="stat-label">Pending</span>
+                                    </div>
                                 </div>
-                                <div class="stat-card completed">
-                                    <span class="stat-value" id="completed-tasks">0</span>
-                                    <span class="stat-label">Completed</span>
-                                </div>
-                                <div class="stat-card pending">
-                                    <span class="stat-value" id="pending-tasks">0</span>
-                                    <span class="stat-label">Pending</span>
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        <div id="dash-progress-fill" class="progress-fill" style="width: 0%"></div>
+                                    </div>
+                                    <span id="dash-progress-text" class="progress-text">0% Complete</span>
                                 </div>
                             </div>
-                            <!-- Progress Bar -->
-                            <div class="progress-container">
-                                <div class="progress-bar">
-                                    <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+                        </section>
+
+                        <!-- Quick Actions -->
+                        <section class="widget quick-actions-widget">
+                            <div class="widget-header">
+                                <h3 class="widget-title"><i data-lucide="zap"></i> Quick Actions</h3>
+                            </div>
+                            <div class="widget-content">
+                                <div class="quick-actions-grid">
+                                    <button class="quick-action-btn" data-action="open-tasks">
+                                        <i data-lucide="list-todo"></i>
+                                        <span>Manage Tasks</span>
+                                    </button>
+                                    <button class="quick-action-btn" data-action="open-notes">
+                                        <i data-lucide="sticky-note"></i>
+                                        <span>Write Notes</span>
+                                    </button>
+                                    <button class="quick-action-btn" data-action="open-focus">
+                                        <i data-lucide="timer"></i>
+                                        <span>Start Focus</span>
+                                    </button>
+                                    <button class="quick-action-btn" data-action="open-themes">
+                                        <i data-lucide="palette"></i>
+                                        <span>Change Theme</span>
+                                    </button>
                                 </div>
-                                <span id="progress-text" class="progress-text">0% Complete</span>
                             </div>
-                        </div>
-                    </section>
+                        </section>
+                    </div>
+                </div>
 
-                    <!-- Task List Widget -->
-                    <section class="widget tasks-widget">
-                        <div class="widget-header">
-                            <h3 class="widget-title"><i data-lucide="list-todo"></i> Task List</h3>
-                            <span id="task-count" class="task-count">0 tasks</span>
-                        </div>
-                        <div class="widget-content">
-                            <!-- Task Input -->
-                            <div class="task-input-container">
-                                <input type="text" id="task-input" class="task-input" placeholder="Add a new task..."
-                                    autocomplete="off">
-                                <button id="add-task-btn" class="add-task-btn">
-                                    <span>Add</span>
-                                    <i data-lucide="plus"></i>
-                                </button>
+                <!-- ========== TASKS FULLSCREEN VIEW ========== -->
+                <div id="view-tasks" class="page-view">
+                    <div class="fullscreen-page">
+                        <div class="page-header">
+                            <div class="page-header-left">
+                                <i data-lucide="check-square" class="page-icon"></i>
+                                <h2>Task Manager</h2>
                             </div>
+                            <span id="task-count" class="badge">0 tasks</span>
+                        </div>
 
-                            <!-- Task Filters -->
+                        <div class="task-input-container large">
+                            <input type="text" id="task-input" class="task-input" placeholder="What needs to be done?"
+                                autocomplete="off">
+                            <button id="add-task-btn" class="add-task-btn">
+                                <i data-lucide="plus"></i>
+                                <span>Add Task</span>
+                            </button>
+                        </div>
+
+                        <div class="task-toolbar">
                             <div class="task-filters">
                                 <button class="filter-btn active" data-filter="all">All</button>
                                 <button class="filter-btn" data-filter="pending">Pending</button>
                                 <button class="filter-btn" data-filter="completed">Completed</button>
                             </div>
-
-                            <!-- Task List - Event Delegation attached here -->
-                            <ul id="task-list" class="task-list">
-                                <!-- Tasks dynamically added -->
-                            </ul>
-
-                            <!-- Empty State -->
-                            <div id="empty-state" class="empty-state">
-                                <i data-lucide="clipboard-list" class="empty-icon"></i>
-                                <p>No tasks yet</p>
-                                <span class="empty-hint">Add your first task above</span>
+                            <div class="task-stats">
+                                <span><i data-lucide="circle"></i> <span id="total-tasks">0</span> total</span>
+                                <span><i data-lucide="check-circle"></i> <span id="completed-tasks">0</span> done</span>
                             </div>
                         </div>
-                    </section>
 
-                    <!-- Quick Notes Widget -->
-                    <section class="widget notes-widget">
-                        <div class="widget-header">
-                            <h3 class="widget-title"><i data-lucide="sticky-note"></i> Quick Notes</h3>
-                            <span id="char-count" class="char-count">0 characters</span>
-                        </div>
-                        <div class="widget-content">
-                            <textarea id="quick-notes" class="notes-textarea"
-                                placeholder="Write your thoughts here..."></textarea>
-                        </div>
-                    </section>
-
-                    <!-- Focus Timer Widget -->
-                    <section class="widget timer-widget">
-                        <div class="widget-header">
-                            <h3 class="widget-title"><i data-lucide="timer"></i> Focus Timer</h3>
-                        </div>
-                        <div class="widget-content">
-                            <div class="timer-display">
-                                <span id="timer-minutes">25</span>
-                                <span class="timer-separator">:</span>
-                                <span id="timer-seconds">00</span>
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
                             </div>
+                            <span id="progress-text" class="progress-text">0% Complete</span>
+                        </div>
+
+                        <ul id="task-list" class="task-list large">
+                            <!-- Tasks dynamically added -->
+                        </ul>
+
+                        <div id="empty-state" class="empty-state">
+                            <i data-lucide="clipboard-list" class="empty-icon"></i>
+                            <p>No tasks yet</p>
+                            <span class="empty-hint">Add your first task above to get started!</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== NOTES FULLSCREEN VIEW ========== -->
+                <div id="view-notes" class="page-view">
+                    <div class="fullscreen-page">
+                        <div class="page-header">
+                            <div class="page-header-left">
+                                <i data-lucide="file-text" class="page-icon"></i>
+                                <h2>Quick Notes</h2>
+                            </div>
+                            <span id="char-count" class="badge">0 characters</span>
+                        </div>
+
+                        <div class="notes-container">
+                            <textarea id="quick-notes" class="notes-textarea large" placeholder="Start writing your thoughts, ideas, meeting notes...
+
+✨ Tips:
+• Use this space to jot down quick ideas
+• Save important information
+• Draft messages before sending
+• Keep track of things to remember
+
+Your notes are here whenever you need them!"></textarea>
+                        </div>
+
+                        <div class="notes-toolbar">
+                            <button id="clear-notes" class="toolbar-btn">
+                                <i data-lucide="trash-2"></i>
+                                <span>Clear All</span>
+                            </button>
+                            <button id="copy-notes" class="toolbar-btn">
+                                <i data-lucide="copy"></i>
+                                <span>Copy to Clipboard</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== FOCUS TIMER FULLSCREEN VIEW ========== -->
+                <div id="view-focus" class="page-view">
+                    <div class="fullscreen-page focus-page">
+                        <div class="page-header">
+                            <div class="page-header-left">
+                                <i data-lucide="target" class="page-icon"></i>
+                                <h2>Focus Timer</h2>
+                            </div>
+                            <span class="badge"><i data-lucide="flame"></i> <span id="session-count">0</span>
+                                sessions</span>
+                        </div>
+
+                        <div class="timer-container">
+                            <div class="timer-ring">
+                                <svg class="timer-svg" viewBox="0 0 200 200">
+                                    <circle class="timer-bg" cx="100" cy="100" r="90"></circle>
+                                    <circle id="timer-progress" class="timer-progress" cx="100" cy="100" r="90">
+                                    </circle>
+                                </svg>
+                                <div class="timer-display-center">
+                                    <span id="timer-minutes">25</span>
+                                    <span class="timer-separator">:</span>
+                                    <span id="timer-seconds">00</span>
+                                </div>
+                            </div>
+
                             <div class="timer-controls">
-                                <button id="timer-start" class="timer-btn primary">
+                                <button id="timer-start" class="timer-btn primary large">
                                     <i data-lucide="play"></i>
-                                    <span>Start</span>
+                                    <span>Start Focus</span>
                                 </button>
-                                <button id="timer-reset" class="timer-btn secondary">
+                                <button id="timer-reset" class="timer-btn secondary large">
                                     <i data-lucide="rotate-ccw"></i>
                                     <span>Reset</span>
                                 </button>
                             </div>
+
                             <div class="timer-presets">
-                                <button class="preset-btn active" data-time="25">25m</button>
-                                <button class="preset-btn" data-time="15">15m</button>
-                                <button class="preset-btn" data-time="5">5m</button>
-                                <button class="preset-btn" data-time="1">1m</button>
+                                <button class="preset-btn active" data-time="25">25 min</button>
+                                <button class="preset-btn" data-time="15">15 min</button>
+                                <button class="preset-btn" data-time="5">5 min</button>
+                                <button class="preset-btn" data-time="1">1 min</button>
                             </div>
-                            <div class="timer-sessions">
-                                <span><i data-lucide="flame"></i> Sessions: <strong id="session-count">0</strong></span>
+
+                            <div class="focus-tips">
+                                <h4><i data-lucide="sparkles"></i> Focus Tips</h4>
+                                <ul>
+                                    <li>🎯 Set a clear goal before starting</li>
+                                    <li>📵 Put your phone on silent mode</li>
+                                    <li>☕ Take short breaks between sessions</li>
+                                    <li>🎵 Try ambient music for concentration</li>
+                                </ul>
                             </div>
                         </div>
-                    </section>
+                    </div>
                 </div>
             </div>
         </main>
@@ -344,7 +424,6 @@
             </div>
             <div class="modal-body">
                 <div class="theme-grid">
-                    <!-- Dark Themes -->
                     <div class="theme-category">
                         <h4 class="category-title">Dark Themes</h4>
                         <div class="theme-options">
@@ -370,7 +449,6 @@
                             </button>
                         </div>
                     </div>
-                    <!-- Light Themes -->
                     <div class="theme-category">
                         <h4 class="category-title">Light Themes</h4>
                         <div class="theme-options">
