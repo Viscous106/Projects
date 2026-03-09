@@ -12,6 +12,10 @@
     padding: 0;
 }
 
+html{
+    scroll-behavior: smooth;
+}
+
 body {
     font-family: 'Poppins', sans-serif;
     line-height: 1.6;
@@ -19,11 +23,15 @@ body {
     color: var(--text-color);
 }
 
+/* Container */
+
 .container {
+    max-width: 1200px;
     margin: auto;
-    overflow: hidden;
     padding: 0 2rem;
 }
+
+/* Header */
 
 header {
     background: #333;
@@ -48,6 +56,7 @@ header .logo {
 header ul {
     display: flex;
     list-style: none;
+    margin-left: auto;
 }
 
 header ul li a {
@@ -61,6 +70,8 @@ header ul li a:hover {
     background: var(--primary-color);
     border-radius: 5px;
 }
+
+/* Hero Section */
 
 #hero {
     background: var(--light-color);
@@ -86,20 +97,40 @@ header ul li a:hover {
     color: var(--primary-color);
 }
 
-.btn {
-    display: inline-block;
-    background: var(--primary-color);
-    color: #fff;
-    padding: 0.8rem 1.5rem;
-    text-decoration: none;
-    border-radius: 5px;
-    margin-top: 1rem;
-    transition: background 0.3s ease;
+/* Button */
+
+.btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+
+    background:var(--primary-color);
+    color:#fff;
+
+    width:200px;           /* makes both buttons same width */
+    height:45px;
+
+    border:none;
+    border-radius:6px;
+
+    font-size:1rem;
+    font-family:'Poppins', sans-serif;
+
+    text-decoration:none;
+    cursor:pointer;
+
+    transition:background 0.3s ease, transform 0.2s ease;
 }
 
-.btn:hover {
-    background: #2980b9;
+.btn:hover{
+    background:#2980b9;
+    transform:translateY(-2px);
 }
+
+.btn:focus{
+    outline:none;
+}
+/* Sections */
 
 section {
     padding: 4rem 0;
@@ -111,6 +142,8 @@ section h2 {
     margin-bottom: 2rem;
 }
 
+/* About */
+
 #about ul {
     list-style: none;
     margin-top: 1rem;
@@ -119,6 +152,8 @@ section h2 {
 #about ul li {
     margin-bottom: 0.5rem;
 }
+
+/* Skills */
 
 #skills .skills-grid {
     display: grid;
@@ -132,7 +167,14 @@ section h2 {
     padding: 1rem;
     border-radius: 5px;
     font-weight: 600;
+    transition: transform 0.3s ease;
 }
+
+#skills .skill:hover{
+    transform: scale(1.05);
+}
+
+/* Projects */
 
 #projects .projects-grid {
     display: grid;
@@ -145,13 +187,16 @@ section h2 {
     padding: 2rem;
     border-radius: 5px;
     text-align: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .project-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-8px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
 }
+
+/* Contact */
 
 #contact form {
     max-width: 600px;
@@ -160,14 +205,17 @@ section h2 {
     flex-direction: column;
 }
 
-#contact input, #contact textarea {
+#contact input,
+#contact textarea {
     padding: 1rem;
     margin-bottom: 1rem;
-    border: 1px solid #ccc;
+    border: 1px solid #444;
     border-radius: 5px;
     background: var(--light-color);
     color: var(--text-color);
 }
+
+/* Footer */
 
 footer {
     background: #333;
@@ -182,9 +230,10 @@ footer .social-links a {
     margin: 0 0.5rem;
 }
 
-/* Hamburger menu styles */
+/* Hamburger Menu */
+
 .hamburger-menu {
-    display: none; /* Hidden by default, shown on small screens */
+    display: none;
     flex-direction: column;
     justify-content: space-around;
     width: 30px;
@@ -204,37 +253,39 @@ footer .social-links a {
     transition: all 0.3s ease;
 }
 
-/* Navigation links on small screens */
+/* Mobile Responsive */
+
 @media(max-width: 768px) {
+
     header nav {
-        flex-wrap: wrap; /* Allow items to wrap */
-        justify-content: space-between; /* Keep logo and hamburger separate */
+        flex-wrap: wrap;
+        justify-content: space-between;
         align-items: center;
     }
 
     header .logo {
-        margin-bottom: 0; /* Reset margin */
+        margin-bottom: 0;
     }
 
     .hamburger-menu {
-        display: flex; /* Show hamburger on small screens */
+        display: flex;
     }
 
     header ul.nav-links {
-        display: none; /* Hide nav links by default */
+        display: none;
         flex-direction: column;
         width: 100%;
         text-align: center;
-        background: #333; /* Same as header background */
+        background: #333;
         padding: 1rem 0;
         position: absolute;
-        top: 60px; /* Adjust based on header height */
+        top: 60px;
         left: 0;
         right: 0;
     }
 
-    header ul.nav-links.active { /* Class to be toggled by JS */
-        display: flex; /* Show nav links when active */
+    header ul.nav-links.active {
+        display: flex;
     }
 
     header ul.nav-links li {
