@@ -36,3 +36,51 @@ if (viewWorkBtn) {
         });
     });
 }
+//Added scroll animation 
+const sections = document.querySelectorAll("section");
+const observer = new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+        if(entry.isIntersecting){
+            entry.target.classList.add("show");
+        }
+    });
+});
+
+sections.forEach(sec=>{
+    sec.classList.add("hidden");
+    observer.observe(sec);
+});
+
+//Improved Contact Form
+const form = document.querySelector("form");
+
+form.addEventListener("submit", function(e){
+    e.preventDefault();
+    alert("Message sent successfully!");
+});
+
+
+//Add Smooth Scroll for Navbar Links
+document.querySelectorAll('a[href^="#"]').forEach(anchor=>{
+    anchor.addEventListener("click",function(e){
+        e.preventDefault();
+        document.querySelector(this.getAttribute("href")).scrollIntoView({
+            behavior:"smooth"
+        });
+    });
+});
+
+//Added Dark / Light Theme Toggle
+const themeToggle = document.getElementById("themeToggle");
+
+themeToggle.addEventListener("click", () => {
+
+    document.body.classList.toggle("light-theme");
+
+    if(document.body.classList.contains("light-theme")){
+        themeToggle.textContent = "☀️";
+    }else{
+        themeToggle.textContent = "🌙";
+    }
+
+});

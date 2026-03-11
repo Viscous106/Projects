@@ -296,3 +296,24 @@ footer .social-links a {
         font-size: 2.5rem;
     }
 }
+.hidden{
+    opacity:0;
+    transform:translateY(30px);
+    transition:all 0.6s ease;
+}
+
+.show{
+    opacity:1;
+    transform:translateY(0);
+}
+.light-theme{
+    --dark-color:#ffffff;
+    --light-color:#f4f4f4;
+    --text-color:#111;
+}
+.theme-icon{
+    font-size:22px;
+    cursor:pointer;
+    margin-left:15px;
+    user-select:none;
+}
