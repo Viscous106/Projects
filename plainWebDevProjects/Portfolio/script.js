@@ -6,18 +6,6 @@ hamburger.addEventListener("click", () => {
     navLinks.classList.toggle("active");
 });
 
-// Smooth scroll for navbar links
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener("click", function(e) {
-        e.preventDefault();
-
-        document.querySelector(this.getAttribute("href"))
-        .scrollIntoView({
-            behavior: "smooth"
-        });
-    });
-});
-
 // Close menu after clicking link
 const navItems = document.querySelectorAll(".nav-links a");
 
