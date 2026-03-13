@@ -1,117 +1,208 @@
-# News Headlines Reader (React + shadcn/ui)
+# News Headlines Reader
 
-This project implements the **News Headlines Reader** mini project using React, `useState`, `useEffect`, list mapping, category filtering, expandable descriptions, and read tracking.
+A production-style React news dashboard built for category-based headline browsing with a clean, responsive UI and API-driven content.
 
-## Implemented Requirements
+## Project Overview
 
-- Fetch headlines with `useEffect`
-- Category dropdown filter
-- Expand headline description
-- Mark headline as read (strike-through style)
-- Read count display
-- Loading state and empty/error state handling
-- Light mode / dark mode toggle
+This application allows users to:
+
+- Browse top headlines by category (including **Tech** in the filter)
+- Expand/collapse article details
+- Mark articles as read/unread with a live read counter
+- Switch between light and dark theme (persisted preference)
+- Handle loading, empty, and error states gracefully
+
+The project is implemented as a full-stack setup:
+
+- **Frontend:** React + Vite + Tailwind + shadcn/ui
+- **Backend:** Express proxy (`/api/news`) for provider integration and safer key handling
+
+---
+
+## Architecture
+
+### High-Level Flow
+
+1. User selects a category in the UI.
+2. Frontend requests `/api/news?category=<selected>`.
+3. Express server reads provider/env config and calls upstream news API.
+4. Server normalizes response and returns article list.
+5. Frontend renders cards with interactive read/expand behavior.
+
+### Why a Backend Proxy?
+
+- Keeps provider integration centralized
+- Provides cleaner error messages and response normalization
+- Reduces direct coupling between UI and upstream API formats
+
+> Note: A direct frontend fallback for GNews is also supported via Vite env keys for resilience during local runs.
+
+---
+
+## Key Features
+
+- **Category Filtering:** General, Business, Tech, Sports, Health, Science, Entertainment
+- **Article Interactions:** expand details, mark read/unread
+- **Read Tracking:** dynamic count in UI
+- **Theme Toggle:** light/dark mode with persistence
+- **Robust States:** loading skeletons, empty results, API error UI
+- **Responsive Design:** mobile-first layout using Tailwind utility patterns
+
+---
 
 ## Tech Stack
 
-- React + Vite
-- Express proxy server
+### Frontend
+
+- React 19
+- Vite 8
 - Tailwind CSS
-- shadcn/ui components (`Card`, `Button`, `Badge`, `Select`, `Skeleton`)
+- shadcn/ui + Radix primitives
+- Lucide icons
 
-## Run Locally
+### Backend
 
-1. Install dependencies:
+- Node.js
+- Express 5
+- dotenv
 
-	```bash
-	npm install
-	```
+### External Providers
 
-2. Add your API key (GNews or NewsAPI):
+- GNews: https://gnews.io/api/v4/top-headlines
+- NewsAPI: https://newsapi.org/v2/top-headlines
 
-	```bash
-	cp .env.example .env
-	```
+---
 
-	For GNews (recommended for this project):
-	- `NEWS_PROVIDER=gnews`
-	- `GNEWS_API_KEY=your_key_here`
+## Folder Structure
 
-	For NewsAPI:
-	- `NEWS_PROVIDER=newsapi`
-	- `NEWS_API_KEY=your_key_here`
+```text
+news-headlines-reader/
+├─ src/
+│  ├─ components/ui/        # shadcn UI primitives
+│  ├─ lib/utils.js          # utility helpers
+│  ├─ App.jsx               # main app logic + UI
+│  └─ index.css             # Tailwind + design tokens
+├─ server.js                # Express API proxy server
+├─ .env.example             # environment template
+├─ render.yaml              # Render blueprint config
+└─ package.json             # scripts and dependencies
+```
 
-	Get keys from:
-	- GNews: https://gnews.io/
-	- NewsAPI: https://newsapi.org/
+---
 
-	Steps:
-	1. Create a free account on NewsAPI
-	2. Open your account dashboard
-	3. Copy the API key
-	4. Paste it into `.env` based on your selected provider.
+## Environment Configuration
 
-3. Start the full app:
+Copy env template:
 
-	```bash
-	npm run dev
-	```
+```bash
+cp .env.example .env
+```
 
-	Frontend runs on `http://localhost:5173`
-	Backend runs on `http://localhost:8787`
+### Required/Important Variables
 
-	If backend is unavailable, frontend can still fetch directly from GNews when `VITE_GNEWS_API_KEY` is set.
+| Variable | Purpose | Example |
+|---|---|---|
+| `NEWS_PROVIDER` | provider selector (`gnews` or `newsapi`) | `gnews` |
+| `GNEWS_API_KEY` | GNews API key | `xxxx` |
+| `NEWS_API_KEY` | NewsAPI key (if using NewsAPI) | `xxxx` |
+| `NEWS_COUNTRY` | country filter | `in` |
+| `NEWS_LANGUAGE` | language for GNews | `en` |
+| `NEWS_MAX_RESULTS` | max results per request | `20` |
+| `PORT` | backend port | `8787` |
 
-4. Build for production:
+### Optional Frontend Fallback Variables
 
-	```bash
-	npm run build
-	```
+| Variable | Purpose |
+|---|---|
+| `VITE_GNEWS_API_KEY` | direct GNews fallback from frontend |
+| `VITE_NEWS_COUNTRY` | fallback country |
+| `VITE_NEWS_LANGUAGE` | fallback language |
+| `VITE_NEWS_MAX_RESULTS` | fallback max results |
 
-5. Serve the built app:
+---
 
-	```bash
-	npm run serve
-	```
+## Local Development
 
-## Notes
+Install dependencies:
 
-- The source mentioned in the problem statement is NewsAPI: https://newsapi.org/v2/top-headlines
-- The app now uses a backend proxy so the API key is not exposed in the frontend bundle.
-- GNews endpoint used when `NEWS_PROVIDER=gnews`: https://gnews.io/api/v4/top-headlines
+```bash
+npm install
+```
 
-## Troubleshooting Fetch Failure
+Run full stack (frontend + backend):
 
-- Always run from project folder [news-headlines-reader](news-headlines-reader)
-- Use `npm run dev` (starts both client + server)
-- If you run only client, configure `VITE_GNEWS_API_KEY` in `.env` for direct fetch fallback
+```bash
+npm run dev
+```
 
-## Deploy on Render (Free)
+Endpoints:
 
-### Option A: Blueprint (recommended)
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:8787`
 
-1. Push this project to GitHub.
-2. In Render, click **New +** → **Blueprint**.
-3. Select your GitHub repository.
-4. Render reads [render.yaml](render.yaml) automatically.
-5. Add secret env var in Render dashboard:
-	- `GNEWS_API_KEY=your_real_key`
-6. Click **Apply** and wait for deploy.
+Build for production:
 
-### Option B: Manual Web Service
+```bash
+npm run build
+```
 
-Create a **Web Service** with these settings:
+Serve production build:
 
-- Environment: `Node`
-- Build Command: `npm install && npm run build`
-- Start Command: `npm run serve`
+```bash
+npm run serve
+```
 
-Add environment variables:
+---
+
+## Available Scripts
+
+| Script | Description |
+|---|---|
+| `npm run dev` | runs client + server concurrently |
+| `npm run dev:client` | runs Vite dev server |
+| `npm run dev:server` | runs Express backend |
+| `npm run build` | creates production frontend build |
+| `npm run serve` | serves app using Express |
+| `npm run lint` | ESLint checks |
+
+---
+
+## Deployment (Render)
+
+This project supports deployment from a monorepo subfolder.
+
+### Manual Web Service Setup
+
+- **Root Directory:** `reactProjects/news-headlines-reader`
+- **Build Command:** `npm install && npm run build`
+- **Start Command:** `npm run serve`
+
+Set env vars in Render dashboard:
 
 - `NEWS_PROVIDER=gnews`
+- `GNEWS_API_KEY=<your_key>`
 - `NEWS_COUNTRY=in`
 - `NEWS_LANGUAGE=en`
 - `NEWS_MAX_RESULTS=20`
-- `GNEWS_API_KEY=your_real_key`
 
-After deploy, open the Render URL and test category switching in the filter.
+---
+
+## Troubleshooting
+
+- Ensure you run from the project folder: [news-headlines-reader](news-headlines-reader)
+- Use `npm run dev` to start both frontend and backend
+- If fetch fails, verify provider key and env var names
+- If using frontend fallback, confirm `VITE_GNEWS_API_KEY` is set
+
+---
+
+## Evaluation Alignment
+
+This implementation covers the core mini-project expectations:
+
+- API integration with `useEffect`
+- state management with `useState`
+- conditional rendering and interactive UI
+- list rendering with proper keys
+- filter + toggle interactions
+
