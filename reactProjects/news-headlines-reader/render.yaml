@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: news-headlines-reader
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run serve
+    autoDeploy: true
+    envVars:
+      - key: NEWS_PROVIDER
+        value: gnews
+      - key: NEWS_COUNTRY
+        value: in
+      - key: NEWS_LANGUAGE
+        value: en
+      - key: NEWS_MAX_RESULTS
+        value: 20
+      - key: GNEWS_API_KEY
+        sync: false

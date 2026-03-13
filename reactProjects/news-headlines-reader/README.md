@@ -85,3 +85,33 @@ This project implements the **News Headlines Reader** mini project using React, 
 - Always run from project folder [news-headlines-reader](news-headlines-reader)
 - Use `npm run dev` (starts both client + server)
 - If you run only client, configure `VITE_GNEWS_API_KEY` in `.env` for direct fetch fallback
+
+## Deploy on Render (Free)
+
+### Option A: Blueprint (recommended)
+
+1. Push this project to GitHub.
+2. In Render, click **New +** → **Blueprint**.
+3. Select your GitHub repository.
+4. Render reads [render.yaml](render.yaml) automatically.
+5. Add secret env var in Render dashboard:
+	- `GNEWS_API_KEY=your_real_key`
+6. Click **Apply** and wait for deploy.
+
+### Option B: Manual Web Service
+
+Create a **Web Service** with these settings:
+
+- Environment: `Node`
+- Build Command: `npm install && npm run build`
+- Start Command: `npm run serve`
+
+Add environment variables:
+
+- `NEWS_PROVIDER=gnews`
+- `NEWS_COUNTRY=in`
+- `NEWS_LANGUAGE=en`
+- `NEWS_MAX_RESULTS=20`
+- `GNEWS_API_KEY=your_real_key`
+
+After deploy, open the Render URL and test category switching in the filter.
