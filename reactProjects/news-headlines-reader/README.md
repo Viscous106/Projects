@@ -60,6 +60,8 @@ This project implements the **News Headlines Reader** mini project using React, 
 	Frontend runs on `http://localhost:5173`
 	Backend runs on `http://localhost:8787`
 
+	If backend is unavailable, frontend can still fetch directly from GNews when `VITE_GNEWS_API_KEY` is set.
+
 4. Build for production:
 
 	```bash
@@ -77,3 +79,9 @@ This project implements the **News Headlines Reader** mini project using React, 
 - The source mentioned in the problem statement is NewsAPI: https://newsapi.org/v2/top-headlines
 - The app now uses a backend proxy so the API key is not exposed in the frontend bundle.
 - GNews endpoint used when `NEWS_PROVIDER=gnews`: https://gnews.io/api/v4/top-headlines
+
+## Troubleshooting Fetch Failure
+
+- Always run from project folder [news-headlines-reader](news-headlines-reader)
+- Use `npm run dev` (starts both client + server)
+- If you run only client, configure `VITE_GNEWS_API_KEY` in `.env` for direct fetch fallback

@@ -18,7 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 const CATEGORY_OPTIONS = [
   { label: 'General', value: 'general' },
   { label: 'Business', value: 'business' },
-  { label: 'Technology', value: 'technology' },
+  { label: 'Tech', value: 'technology' },
   { label: 'Sports', value: 'sports' },
   { label: 'Health', value: 'health' },
   { label: 'Science', value: 'science' },
@@ -26,28 +26,64 @@ const CATEGORY_OPTIONS = [
 ]
 
 async function fetchNews(selectedCategory) {
-  const response = await fetch(`/api/news?category=${selectedCategory}`)
+  try {
+    const response = await fetch(`/api/news?category=${selectedCategory}`)
 
-  const rawBody = await response.text()
-  let data = {}
+    const rawBody = await response.text()
+    let data = {}
 
-  if (rawBody) {
-    try {
-      data = JSON.parse(rawBody)
-    } catch {
-      throw new Error('Backend returned an invalid response. Ensure both client and server are running.')
+    if (rawBody) {
+      try {
+        data = JSON.parse(rawBody)
+      } catch {
+        throw new Error('Backend returned an invalid response. Ensure both client and server are running.')
+      }
     }
-  }
 
-  if (!response.ok) {
-    throw new Error(data.message || 'Failed to fetch headlines.')
-  }
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to fetch headlines.')
+    }
 
-  if (!Array.isArray(data.articles)) {
-    throw new Error('Unexpected response format from backend API.')
-  }
+    if (!Array.isArray(data.articles)) {
+      throw new Error('Unexpected response format from backend API.')
+    }
 
-  return data.articles || []
+    return data.articles || []
+  } catch (backendError) {
+    const directGnewsKey = import.meta.env.VITE_GNEWS_API_KEY
+
+    if (!directGnewsKey) {
+      throw backendError
+    }
+
+    const endpoint = new URL('https://gnews.io/api/v4/top-headlines')
+    endpoint.searchParams.set('category', selectedCategory)
+    endpoint.searchParams.set('lang', import.meta.env.VITE_NEWS_LANGUAGE || 'en')
+    endpoint.searchParams.set('country', import.meta.env.VITE_NEWS_COUNTRY || 'in')
+    endpoint.searchParams.set('max', import.meta.env.VITE_NEWS_MAX_RESULTS || '20')
+    endpoint.searchParams.set('apikey', directGnewsKey)
+
+    const gnewsResponse = await fetch(endpoint)
+    const gnewsData = await gnewsResponse.json()
+
+    if (!gnewsResponse.ok || gnewsData.errors) {
+      const providerError = Array.isArray(gnewsData.errors)
+        ? gnewsData.errors.join(', ')
+        : gnewsData.message
+      throw new Error(providerError || 'Failed to fetch headlines from GNews.')
+    }
+
+    return (gnewsData.articles || []).map((article, index) => ({
+      id: article.url || `${article.title}-${index}`,
+      category: selectedCategory,
+      title: article.title,
+      description: article.description || 'No description available for this article.',
+      source: article.source?.name || 'Unknown Source',
+      url: article.url,
+      imageUrl: article.image || '',
+      publishedAt: article.publishedAt,
+    }))
+  }
 }
 
 function App() {
