@@ -1,0 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-brand-pink: #f1cada;
+  --color-brand-blue: #2babb2;
+  --color-brand-bg: #fdfdfd;
+
+  /* Global font variable that can be easily changed later */
+  --font-global: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+
+  /* Overwriting Tailwind's default sans to use our new global variable */
+  --font-sans: var(--font-global);
+}
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: var(--color-brand-bg);
+    color: #333333;
+    font-family: var(--font-global);
+  }
+}

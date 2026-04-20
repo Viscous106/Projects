@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satrang - Premium Chess Platform</title>
+    <link rel="stylesheet" href="style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:wght@700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+
+    <!-- Preloader -->
+    <div id="preloader">
+        <div class="logo-loader">
+            <i class="fas fa-chess-king"></i>
+            <i class="fas fa-chess-queen"></i>
+        </div>
+        <h2>Satrang</h2>
+    </div>
+
+    <div class="app-container">
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fas fa-chess-knight"></i>
+                <span>Satrang</span>
+            </div>
+
+            <nav class="nav-links">
+                <a href="#" class="active" id="nav-dashboard"><i class="fas fa-th-large"></i> Dashboard</a>
+                <a href="#" id="nav-puzzles"><i class="fas fa-puzzle-piece"></i> Puzzles</a>
+                <a href="#" id="nav-learn"><i class="fas fa-graduation-cap"></i> Learn</a>
+                <a href="#" id="nav-watch"><i class="fas fa-tv"></i> Watch</a>
+                <div class="spacer"></div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-content">
+
+            <!-- Header -->
+            <header class="top-bar">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search players, games...">
+                </div>
+
+                <div class="user-actions" id="auth-section">
+                    <button class="btn-text">Language: EN</button>
+                    <div class="auth-buttons">
+                        <button id="login-btn" class="secondary-btn small">Log In</button>
+                        <button id="signup-btn" class="primary-btn small">Sign Up</button>
+                    </div>
+                </div>
+
+                <div class="user-profile hidden" id="user-section">
+                    <span class="user-name">Welcome, <b id="display-username">Player</b></span>
+                    <div class="avatar-small"><i class="fas fa-user-astronaut"></i></div>
+                    <button id="logout-btn" class="icon-btn"><i class="fas fa-sign-out-alt"></i></button>
+                </div>
+            </header>
+
+            <!-- Dashboard / Game View -->
+            <div class="content-view">
+
+                <!-- Feedback Button -->
+                <button id="feedback-btn" class="feedback-float" title="Send Feedback">
+                    <i class="fas fa-comment-dots"></i> Feedback
+                </button>
+
+                <!-- Feedback Modal -->
+                <div id="feedback-modal" class="modal">
+                    <div class="modal-content feedback-modal-content">
+                        <h2><i class="fas fa-envelope"></i> Send Feedback</h2>
+                        <p class="subtitle">We'd love to hear from you!</p>
+
+                        <div class="settings-group">
+                            <label for="feedback-name">Your Name</label>
+                            <input type="text" id="feedback-name" placeholder="Enter your name">
+                        </div>
+
+                        <div class="settings-group">
+                            <label for="feedback-email">Your Email</label>
+                            <input type="email" id="feedback-email" placeholder="your@email.com">
+                        </div>
+
+                        <div class="settings-group">
+                            <label for="feedback-type">Feedback Type</label>
+                            <select id="feedback-type">
+                                <option value="review">Review</option>
+                                <option value="opinion">Opinion/Suggestion</option>
+                                <option value="bug">Bug Report</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="settings-group">
+                            <label for="feedback-message">Your Message</label>
+                            <textarea id="feedback-message" rows="4"
+                                placeholder="Write your feedback here..."></textarea>
+                        </div>
+
+                        <div class="contact-info-box">
+                            <p><i class="fas fa-info-circle"></i> You can also reach us at:</p>
+                            <a href="mailto:trylearnforever@gmail.com" class="contact-email">
+                                <i class="fas fa-envelope"></i> trylearnforever@gmail.com
+                            </a>
+                        </div>
+
+                        <button id="submit-feedback-btn" class="primary-btn">Submit Feedback</button>
+                        <button id="close-feedback-btn" class="secondary-btn">Cancel</button>
+                    </div>
+                </div>
+
+                <!-- Puzzles View -->
+                <div id="puzzles-view" class="dashboard-view hidden">
+                    <div class="section-header">
+                        <h2><i class="fas fa-puzzle-piece"></i> Chess Puzzles (Level 1-100)</h2>
+                        <p>Solve mates to level up! increasing difficulty.</p>
+                    </div>
+                    <div class="level-grid" id="level-grid">
+                        <!-- Levels generated by JS -->
+                    </div>
+                </div>
+
+                <!-- Puzzle Interface (Hidden Game for Puzzles) -->
+                <div id="puzzle-interface" class="glass-container hidden">
+                    <div class="puzzle-header">
+                        <h3 id="puzzle-title">Level 1: Mate in 1</h3>
+                        <button id="exit-puzzle-btn" class="secondary-btn small">Exit</button>
+                    </div>
+                    <div id="puzzle-board" class="chessboard"></div>
+                    <p id="puzzle-status">White to move. Find the mate!</p>
+                </div>
+
+                <!-- Learn Interface (Interactive Tutorial) -->
+                <div id="learn-interface" class="learn-container hidden">
+                    <!-- Left: Board -->
+                    <div class="learn-board-section">
+                        <div class="learn-header">
+                            <h3 id="learn-title">Learning: The Pawn</h3>
+                            <button id="exit-learn-btn" class="secondary-btn small"><i class="fas fa-times"></i>
+                                Close</button>
+                        </div>
+                        <div id="learn-board" class="chessboard learn-board-2d"></div>
+                        <div class="learn-controls">
+                            <p id="learn-instruction">Click on a highlighted square to move!</p>
+                            <button id="next-lesson-btn" class="primary-btn hidden">Next Lesson <i
+                                    class="fas fa-arrow-right"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Right: Rules Panel -->
+                    <div class="learn-rules-panel">
+                        <div class="rules-header">
+                            <i id="rules-icon" class="fas fa-chess-pawn"></i>
+                            <h3 id="rules-piece-name">The Pawn</h3>
+                        </div>
+                        <div class="rules-content" id="rules-carousel-container">
+                            <!-- Dynamic Rule Display -->
+                            <div class="rule-display-large">
+                                <h2 id="current-rule-text">Pawn moves forward one square.</h2>
+                            </div>
+                            <div class="rule-controls">
+                                <button id="next-rule-btn" class="primary-btn wide-btn">Next Rule <i
+                                        class="fas fa-arrow-right"></i></button>
+                            </div>
+                        </div>
+                        <div class="step-indicator">
+                            <span id="learn-step">Step 1 of 2</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Learn View -->
+                <div id="learn-view" class="dashboard-view hidden">
+                    <div class="section-header">
+                        <h2><i class="fas fa-graduation-cap"></i> Learn with Fun</h2>
+                        <p>Master the pieces with interactive tutorials.</p>
+                    </div>
+
+                    <div class="learn-cards-container">
+                        <!-- Pawn -->
+                        <div class="learn-card" data-piece="pawn">
+                            <div class="card-inner">
+                                <i class="fas fa-chess-pawn"></i>
+                                <h3>The Pawn</h3>
+                                <p>Click to learn</p>
+                            </div>
+                        </div>
+
+                        <!-- Knight -->
+                        <div class="learn-card" data-piece="knight">
+                            <div class="card-inner">
+                                <i class="fas fa-chess-knight"></i>
+                                <h3>The Knight</h3>
+                                <p>Click to learn</p>
+                            </div>
+                        </div>
+
+                        <!-- Bishop -->
+                        <div class="learn-card" data-piece="bishop">
+                            <div class="card-inner">
+                                <i class="fas fa-chess-bishop"></i>
+                                <h3>The Bishop</h3>
+                                <p>Click to learn</p>
+                            </div>
+                        </div>
+
+                        <!-- Rook -->
+                        <div class="learn-card" data-piece="rook">
+                            <div class="card-inner">
+                                <i class="fas fa-chess-rook"></i>
+                                <h3>The Rook</h3>
+                                <p>Click to learn</p>
+                            </div>
+                        </div>
+
+                        <!-- Queen -->
+                        <div class="learn-card" data-piece="queen">
+                            <div class="card-inner">
+                                <i class="fas fa-chess-queen"></i>
+                                <h3>The Queen</h3>
+                                <p>Click to learn</p>
+                            </div>
+                        </div>
+
+                        <!-- King -->
+                        <div class="learn-card" data-piece="king">
+                            <div class="card-inner">
+                                <i class="fas fa-chess-king"></i>
+                                <h3>The King</h3>
+                                <p>Click to learn</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Toast/Alert -->
+                <div class="toast-overlay" id="toast-overlay"></div>
+                <div class="custom-toast" id="custom-toast">
+                    <h2 id="toast-title">🎉 Great Move!</h2>
+                    <p id="toast-message">You've completed this step!</p>
+                    <button id="toast-btn">Continue</button>
+                </div>
+
+                <!-- Watch View -->
+                <div id="watch-view" class="dashboard-view hidden">
+                    <div class="section-header">
+                        <h2><i class="fas fa-tv"></i> Grandmaster Zone</h2>
+                        <p>Watch top players clash / Educational content.</p>
+                    </div>
+                    <div class="video-grid">
+                        <div class="video-card">
+                            <div class="thumbnail">
+                                <i class="fas fa-play-circle"></i>
+                            </div>
+                            <div class="video-info">
+                                <h4>Magnus Carlsen's Best Sacrifices</h4>
+                                <span>Grandmaster Chess • 1.2M Views</span>
+                            </div>
+                        </div>
+                        <div class="video-card">
+                            <div class="thumbnail" style="background: linear-gradient(45deg, #444, #666);">
+                                <i class="fas fa-play-circle"></i>
+                            </div>
+                            <div class="video-info">
+                                <h4>Hikaru Nakamura Speedrun</h4>
+                                <span>GM Hikaru • 800K Views</span>
+                            </div>
+                        </div>
+                        <div class="video-card">
+                            <div class="thumbnail" style="background: linear-gradient(45deg, #222, #444);">
+                                <i class="fas fa-play-circle"></i>
+                            </div>
+                            <div class="video-info">
+                                <h4>Chess Openings for Beginners</h4>
+                                <span>GothamChess • 2.5M Views</span>
+                            </div>
+                        </div>
+                        <div class="video-card">
+                            <div class="thumbnail" style="background: linear-gradient(45deg, #333, #555);">
+                                <i class="fas fa-play-circle"></i>
+                            </div>
+                            <div class="video-info">
+                                <h4>History of The World Championship</h4>
+                                <span>Agadmator • 900K Views</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Initial Dashboard State -->
+                <div id="dashboard-view" class="dashboard-view">
+
+                    <!-- Play for Fun Section - NOW AT TOP -->
+                    <div class="fun-chess-section glass-panel compact-fun">
+                        <div class="fun-chess-header">
+                            <i class="fas fa-gamepad"></i>
+                            <h2>Play for Fun</h2>
+                            <p>Customize piece movement rules and enjoy chess your way!</p>
+
+
+
+                        </div>
+
+
+
+                        <div class="fun-chess-content-grid">
+                            <!-- Left: Pawn Position & Quick Options -->
+
+                            <div class="fun-left-section">
+                                <div class="pawn-position-selector compact">
+                                    <h4><i class="fas fa-chess-pawn"></i> Pawn Start Row</h4>
+                                    <div class="position-options horizontal">
+                                        <button class="position-btn active" data-row="2">Row 2</button>
+                                        <button class="position-btn" data-row="3">Row 3</button>
+                                        <button class="position-btn" data-row="4">Row 4</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Center: Piece Rules Grid -->
+                            <div class="piece-customizer-grid compact">
+                                <div class="piece-option-card mini">
+                                    <div class="piece-icon"><i class="fas fa-chess-pawn"></i></div>
+                                    <select class="custom-rule-select" data-piece="pawn">
+                                        <option value="standard">Pawn: Standard</option>
+                                        <option value="sideways">Sideways</option>
+                                        <option value="backward">Backward</option>
+                                        <option value="diagonal">Diagonal</option>
+                                    </select>
+                                </div>
+                                <div class="piece-option-card mini">
+                                    <div class="piece-icon knight"><i class="fas fa-chess-knight"></i></div>
+                                    <select class="custom-rule-select" data-piece="knight">
+                                        <option value="standard">Knight: Standard</option>
+                                        <option value="extended">Extended L</option>
+                                        <option value="super">+Bishop</option>
+                                    </select>
+                                </div>
+                                <div class="piece-option-card mini">
+                                    <div class="piece-icon bishop"><i class="fas fa-chess-bishop"></i></div>
+                                    <select class="custom-rule-select" data-piece="bishop">
+                                        <option value="standard">Bishop: Standard</option>
+                                        <option value="limited">Max 3 Sq</option>
+                                        <option value="jumping">Can Jump</option>
+                                    </select>
+                                </div>
+                                <div class="piece-option-card mini">
+                                    <div class="piece-icon rook"><i class="fas fa-chess-rook"></i></div>
+                                    <select class="custom-rule-select" data-piece="rook">
+                                        <option value="standard">Rook: Standard</option>
+                                        <option value="limited">Max 5 Sq</option>
+                                        <option value="diagonal">+Diagonal</option>
+                                    </select>
+                                </div>
+                                <div class="piece-option-card mini">
+                                    <div class="piece-icon queen"><i class="fas fa-chess-queen"></i></div>
+                                    <select class="custom-rule-select" data-piece="queen">
+                                        <option value="standard">Queen: Standard</option>
+                                        <option value="limited">Max 4 Sq</option>
+                                        <option value="knight">+Knight</option>
+                                    </select>
+                                </div>
+                                <div class="piece-option-card mini">
+                                    <div class="piece-icon king"><i class="fas fa-chess-king"></i></div>
+                                    <select class="custom-rule-select" data-piece="king">
+                                        <option value="standard">King: Standard</option>
+                                        <option value="super">2 Squares</option>
+                                        <option value="knight">+Knight</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Right: Start Button -->
+
+                        </div>
+                        <div class="fun-right-section">
+                            <button id="start-fun-game" class="start-fun-game-btn compact">
+                                <i class="fas fa-play-circle"></i> Start Custom Game
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Main Dashboard Grid -->
+                    <div class="play-dashboard-grid">
+
+                        <!-- Play with Friend Card -->
+                        <div class="play-card-enhanced" id="play-friend-card">
+                            <div class="chess-bg-overlay"></div>
+
+                            <div class="avatar-section">
+                                <div class="avatar-circle">
+                                    <i class="fas fa-user-friends"></i>
+                                </div>
+                            </div>
+
+                            <div class="hero-tagline">
+                                <span>CHALLENGE YOUR CHAMPION</span>
+                            </div>
+                            <div class="card-content-flex">
+
+                                <div class="info-section">
+                                    <h3>Play with Friend</h3>
+                                    <p class="zoom-desc">Challenge your friend to an epic chess battle!</p>
+
+                                    <input type="text" id="friend-name" placeholder="Friend's Name" class="glass-input">
+
+                                    <div class="controls-wrapper">
+
+                                        <button id="start-friend-game" class="lets-play-btn hero-play-btn">
+                                            <i class="fas fa-play-circle"></i> Let's Play
+                                        </button>
+                                    </div>
+                                    <input type="hidden" id="your-name" value="Nikhil">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Play with Bot Card -->
+                        <div class="play-card-enhanced" id="play-bot-card">
+                            <div class="chess-bg-overlay"></div>
+
+                            <div class="avatar-section">
+                                <div class="avatar-circle bot-avatar">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                            </div>
+
+                            <div class="hero-tagline">
+                                <span>DEFEAT THE MACHINE</span>
+                            </div>
+                            <div class="card-content-flex">
+
+                                <div class="info-section">
+                                    <h3>Play with Bot</h3>
+                                    <p class="zoom-desc">Test your strategy against our AI!</p>
+
+                                    <select id="bot-difficulty" class="glass-input">
+                                        <option value="easy">Easy</option>
+                                        <option value="medium" selected>Medium</option>
+                                        <option value="hard">Hard</option>
+                                    </select>
+
+                                    <div class="controls-wrapper">
+
+                                        <button id="start-bot-game" class="lets-play-btn hero-play-btn bot-play-btn">
+                                            <i class="fas fa-play-circle"></i> Let's Play
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Time Control Card -->
+                        <div class="time-card glass-panel">
+                            <h3><i class="fas fa-clock"></i> Time Control</h3>
+                            <div class="time-options">
+                                <div class="time-option" data-time="180">
+                                    <span class="time-value">3</span>
+                                    <span class="time-label">min</span>
+                                </div>
+                                <div class="time-option" data-time="300">
+                                    <span class="time-value">5</span>
+                                    <span class="time-label">min</span>
+                                </div>
+                                <div class="time-option active" data-time="600">
+                                    <span class="time-value">10</span>
+                                    <span class="time-label">min</span>
+                                </div>
+                                <div class="time-option" data-time="1800">
+                                    <span class="time-value">30</span>
+                                    <span class="time-label">min</span>
+                                </div>
+                                <div class="time-option" data-time="unlimited">
+                                    <span class="time-value">∞</span>
+                                    <span class="time-label">None</span>
+                                </div>
+                            </div>
+                            <div class="selected-time">
+                                Selected: <strong id="selected-time-display">10 min</strong>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Game Container (Hidden initially) -->
+                <div id="chess-app-container" class="glass-container hidden">
+                    <!-- Start Screen Modal (Moved here) -->
+                    <div id="start-screen" class="modal active">
+                        <div class="modal-content large-modal">
+                            <center>
+                                <h1>New Game</h1>
+                                <p class="subtitle">Configure settings</p>
+                            </center>
+
+                            <div class="settings-group">
+                                <label>Player Name</label>
+                                <input type="text" id="player-name-input" placeholder="Enter your name"
+                                    value="Player 1">
+                            </div>
+
+                            <div class="settings-group">
+                                <label>Opponent</label>
+                                <div class="toggle-options" data-setting="mode">
+                                    <button class="active" data-value="pvp"><i class="fas fa-user-friends"></i>
+                                        Friend</button>
+                                    <button data-value="bot"><i class="fas fa-robot"></i> Bot</button>
+                                </div>
+                            </div>
+
+                            <div class="settings-group">
+                                <label>Time Control</label>
+                                <select id="time-select">
+                                    <option value="unlimited">Unlimited</option>
+                                    <option value="600">10 Minutes</option>
+                                    <option value="300">5 Minutes</option>
+                                    <option value="180">3 Minutes</option>
+                                </select>
+                            </div>
+
+                            <div class="settings-group">
+                                <label>Game Rules</label>
+                                <button id="custom-rules-btn" class="secondary-btn">Configure Custom Rules</button>
+                            </div>
+
+                            <div class="settings-group">
+                                <label>Board Theme</label>
+                                <div class="color-options" id="theme-options">
+                                    <div class="theme-preview wood active" data-theme="wood"></div>
+                                    <div class="theme-preview ocean" data-theme="ocean"></div>
+                                    <div class="theme-preview midnight" data-theme="midnight"></div>
+                                </div>
+                            </div>
+
+                            <button id="start-game-btn" class="primary-btn">Start Game</button>
+                            <button id="cancel-game-btn" class="secondary-btn">Cancel</button>
+                        </div>
+                    </div>
+
+                    <!-- Custom Rules Modal -->
+                    <div id="custom-rules-modal" class="modal">
+                        <div class="modal-content">
+                            <h3>Custom Rules</h3>
+                            <p class="subtitle">Customize your game</p>
+
+                            <div class="settings-group">
+                                <label>Remove Piece (Handicap)</label>
+                                <select id="handicap-select">
+                                    <option value="none">None</option>
+                                    <option value="w_a2">White Pawn A2</option>
+                                    <option value="w_h2">White Pawn H2</option>
+                                    <option value="w_q">White Queen (Hard)</option>
+                                    <option value="b_a7">Black Pawn A7</option>
+                                    <option value="b_h7">Black Pawn H7</option>
+                                    <option value="b_q">Black Queen (Hard)</option>
+                                </select>
+                            </div>
+
+                            <div class="settings-group">
+                                <label>Starting Position</label>
+                                <div class="toggle-options">
+                                    <button class="active">Standard</button>
+                                    <button disabled title="Coming Soon">Fischer Random</button>
+                                </div>
+                            </div>
+
+                            <button id="close-rules-btn" class="primary-btn">Save & Close</button>
+                        </div>
+                    </div>
+
+                    <!-- Game Area -->
+                    <div id="game-area" class="game-area hidden">
+                        <!-- Sidebar: Move History -->
+                        <div class="game-sidebar">
+                            <h3 class="sidebar-title"><i class="fas fa-history"></i> Moves</h3>
+                            <div class="history-container">
+                                <ul id="move-history-list">
+                                    <!-- Moves will be added here -->
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Main Board Area -->
+                        <div class="game-main-content">
+                            <div class="player-info top">
+                                <div class="avatar"><i class="fas fa-robot"></i></div>
+                                <div class="details">
+                                    <span id="opponent-name">Player 2</span>
+                                    <span id="opponent-time" class="timer">--:--</span>
+                                </div>
+                                <div class="score-board">
+                                    <div id="opponent-score" class="score">0</div>
+                                    <div id="opponent-captured" class="captured-pieces"></div>
+                                </div>
+                            </div>
+
+                            <div id="chessboard" class="chessboard">
+                                <!-- Squares will be generated by JS -->
+                            </div>
+
+                            <div class="player-info bottom">
+                                <div class="avatar"><i class="fas fa-user"></i></div>
+                                <div class="details">
+                                    <span id="player-name-display">Player 1</span>
+                                    <span id="player-time" class="timer">--:--</span>
+                                </div>
+                                <div class="score-board">
+                                    <div id="player-score" class="score">0</div>
+                                    <div id="player-captured" class="captured-pieces"></div>
+                                </div>
+                            </div>
+
+                            <div class="controls">
+                                <button id="reset-btn" class="control-btn" title="Reset Game"><i
+                                        class="fas fa-redo"></i></button>
+                                <div id="last-move-display" class="last-move">Last Move: -</div>
+                                <button id="menu-btn" class="control-btn" title="Main Menu"><i
+                                        class="fas fa-bars"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Modal (Global) -->
+    <div id="game-over-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="winner-text">White Wins!</h2>
+            <button id="play-again-btn" class="primary-btn">Play Again</button>
+            <button id="main-menu-btn" class="secondary-btn">Main Menu</button>
+        </div>
+    </div>
+
+    <!-- Puzzle Feedback Modal -->
+    <div id="puzzle-feedback-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="puzzle-feedback-title">Correct!</h2>
+            <p id="puzzle-feedback-message">Well done.</p>
+            <div class="feedback-actions">
+                <button id="next-level-btn" class="primary-btn hidden">Next Level >></button>
+                <button id="retry-level-btn" class="secondary-btn hidden">Try Again</button>
+                <button id="puzzle-menu-btn" class="secondary-btn">Puzzles Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation (visible on mobile only) -->
+    <nav class="mobile-nav">
+        <a href="#" class="active" id="mobile-nav-dashboard">
+            <i class="fas fa-th-large"></i>
+            <span>Home</span>
+        </a>
+        <a href="#" id="mobile-nav-puzzles">
+            <i class="fas fa-puzzle-piece"></i>
+            <span>Puzzles</span>
+        </a>
+        <a href="#" id="mobile-nav-learn">
+            <i class="fas fa-graduation-cap"></i>
+            <span>Learn</span>
+        </a>
+        <a href="#" id="mobile-nav-watch">
+            <i class="fas fa-tv"></i>
+            <span>Watch</span>
+        </a>
+    </nav>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
